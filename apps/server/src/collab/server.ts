@@ -60,6 +60,29 @@ export async function saveDocState(db: Db, ring: KeyRing, name: string, projectI
     .onConflictDoUpdate({ target: collabDocs.name, set: { state: stored, encrypted, size: state.byteLength, updatedAt: values.updatedAt } })
 }
 
+/**
+ * Store a live document by MERGING it with the stored state (CRDT union) instead of overwriting.
+ * During zero-downtime deploys two app containers overlap and may both hold the same document; a
+ * plain overwrite would drop edits that only reached the other container. The row lock serializes
+ * concurrent writers; merging two states of the same document is always safe for Yjs.
+ */
+export async function mergeDocState(db: Db, ring: KeyRing, name: string, projectId: string, state: Uint8Array): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [row] = await tx
+      .select({ state: collabDocs.state, encrypted: collabDocs.encrypted })
+      .from(collabDocs)
+      .where(eq(collabDocs.name, name))
+      .limit(1)
+      .for('update')
+    let merged = state
+    if (row && row.state.byteLength) {
+      const existing = row.encrypted ? new Uint8Array(openRecord(ring, row.state, docAad(name))) : row.state
+      merged = Y.mergeUpdates([existing, state])
+    }
+    await saveDocState(tx as unknown as Db, ring, name, projectId, merged)
+  })
+}
+
 export function createCollab(d: CollabDeps): CollabService {
   const { config, log, db, ring } = d
   const trusted = new Set(config.trustedOrigins)
@@ -72,7 +95,7 @@ export function createCollab(d: CollabDeps): CollabService {
       const parsed = docNames.parse(documentName)
       if (!parsed || deletedProjects.has(parsed.projectId)) return
       try {
-        await saveDocState(db, ring, documentName, parsed.projectId, state)
+        await mergeDocState(db, ring, documentName, parsed.projectId, state)
       } catch (err) {
         // Project deleted while the doc was live (FK violation) — nothing to keep.
         log.warn({ doc: documentName, err: (err as Error).message }, 'collab store skipped')

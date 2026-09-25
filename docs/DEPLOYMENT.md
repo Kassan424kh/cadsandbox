@@ -144,14 +144,30 @@ and copy the blobs back into the `appdata` volume. Blobs and Yjs documents stay 
 - **Development:** `corepack pnpm dev` (web :5173 proxies `/api` + `/collab` to :8787, PGlite, mails
   in the console). Tests: `corepack pnpm --filter @cadsandbox/server test`.
 
-## Dokploy (Traefik)
+## Dokploy (Traefik) — external data, zero downtime
 
-`docker-compose.dokploy.yml` runs CadSandbox behind Dokploy's Traefik (no Caddy, no host ports):
+`docker-compose.dokploy.yml` runs CadSandbox behind Dokploy's Traefik the same way as Bylbox:
 
-1. Create a **Docker Compose** service from this repository, compose path `./docker-compose.dokploy.yml`, branch `main`, auto-deploy on.
-2. **Environment** (Dokploy writes it to `.env`): `APP_DOMAIN`, `PUBLIC_URL=https://<APP_DOMAIN>`,
-   `BETTER_AUTH_SECRET`, `POSTGRES_PASSWORD` (hex, no URL-special characters), `STORAGE_ENCRYPTION_KEY`
-   (`openssl rand -base64 32`, never change it later), plus optional SMTP/`ADMIN_EMAILS`/legal URLs.
-3. Leave the **Domains** tab empty — Traefik labels define the route (HTTPS via `letsencrypt`).
-4. Point the domain's DNS A record at the server. With a dynamic IP, add the record name to the
+1. **Data outside the containers.** Create a database and login on the existing PostgreSQL server
+   (e.g. `CREATE ROLE cadsandbox LOGIN PASSWORD '…'; CREATE DATABASE prod_cadsandbox OWNER cadsandbox;`)
+   and an S3 bucket + access key limited to it (MinIO). The app containers keep nothing on disk.
+2. Create a **Docker Compose** service from this repository — compose path `./docker-compose.dokploy.yml`,
+   branch `main`.
+3. **Environment**: `APP_DOMAIN`, `PUBLIC_URL=https://<APP_DOMAIN>`, `DATABASE_URL`, `S3_ENDPOINT`, `S3_BUCKET`,
+   `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `BETTER_AUTH_SECRET`, `STORAGE_ENCRYPTION_KEY`
+   (`openssl rand -base64 32`, never change it later), `SMTP_*` + `MAIL_FROM`, `ADMIN_EMAILS`, optional
+   `BACKUP_KEEP_DAYS` (default 14).
+4. Leave the **Domains** tab empty — Traefik labels define the route (HTTPS via `letsencrypt`).
+5. **Advanced → Command** (zero-downtime deploy; `<app>` = the compose's app name in Dokploy):
+
+   ```text
+   compose -p <app> -f ./docker-compose.dokploy.yml build app && docker compose -p <app> -f ./docker-compose.dokploy.yml up -d --no-deps --wait --wait-timeout 240 app2 && docker compose -p <app> -f ./docker-compose.dokploy.yml up -d --no-deps --wait --wait-timeout 240 app && docker compose -p <app> -f ./docker-compose.dokploy.yml stop app2 && docker compose -p <app> -f ./docker-compose.dokploy.yml up -d --remove-orphans
+   ```
+
+   The standby `app2` answers while `app` is replaced, then stops again (collaboration keeps open
+   documents in memory, so only one instance runs outside deployments). Document states stored during
+   the overlap are merged, so no edit is lost.
+6. Point the domain's DNS A record at the server. With a dynamic IP, add the record name to the
    `DOMAINS` list of the router's Vercel DNS updater (`<domain>*<record>+<record>`).
+7. Keep Docker's build cache in check (Dokploy → Settings → daily Docker cleanup); every image build of
+   this monorepo adds several GB of cache.
