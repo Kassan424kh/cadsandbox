@@ -1,0 +1,232 @@
+/* Settings pages: stacked section cards. */
+
+.page {
+  display: grid;
+  gap: 20px;
+  max-width: 860px;
+}
+
+.section {
+  display: grid;
+  gap: 16px;
+  padding: 22px 24px;
+  border-radius: var(--cs-radius-lg);
+  border: 1px solid var(--cs-border);
+  background: var(--cs-surface);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sectionHead h2 {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionHead p {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--cs-text-2);
+  line-height: 1.55;
+  max-width: 560px;
+}
+
+.danger {
+  border-color: color-mix(in srgb, var(--cs-danger) 40%, var(--cs-border));
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+  max-width: 460px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cs-text-2);
+}
+
+.hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--cs-text-3);
+  line-height: 1.5;
+}
+
+.error {
+  font-size: 12.5px;
+  color: var(--cs-danger);
+}
+
+.avatarRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.list {
+  display: grid;
+  border: 1px solid var(--cs-border);
+  border-radius: var(--cs-radius-md);
+  overflow: hidden;
+}
+
+.listItem {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-top: 1px solid var(--cs-border);
+  font-size: 13px;
+}
+
+.listItem:first-child {
+  border-top: 0;
+}
+
+.listItem svg {
+  color: var(--cs-text-3);
+}
+
+.itemText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.itemText strong {
+  font-weight: 600;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.itemText span {
+  font-size: 12px;
+  color: var(--cs-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setup {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .setup {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.secret {
+  font-family: var(--cs-font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  padding: 8px 10px;
+  border-radius: var(--cs-radius-sm);
+  background: var(--cs-surface-2);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.codes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 14px;
+  border-radius: var(--cs-radius-md);
+  background: var(--cs-surface-2);
+  font-family: var(--cs-font-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 12px;
+  border-top: 1px solid var(--cs-border);
+  line-height: 1.5;
+}
+
+.table th {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cs-text-3);
+  border-top: 0;
+}
+
+.table td:first-child {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--cs-border);
+  border-radius: var(--cs-radius-md);
+}
+
+.choiceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.choiceRow > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.choiceRow strong {
+  font-size: 13.5px;
+}
+
+.choiceRow span {
+  font-size: 12.5px;
+  color: var(--cs-text-3);
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+/* UI-kit Select triggers are full-width by default; size them inside flex rows. */
+.choiceControl {
+  flex: none;
+  width: 200px !important;
+}

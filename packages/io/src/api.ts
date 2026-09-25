@@ -1,12 +1,13 @@
 // @cadsandbox/io — import/export contract. Everything runs client-side (WASM loaders are
 // lazy-loaded on first use so they never weigh on startup).
-import type { CadDocument, DocJSON, DocSnapshot, LengthUnit, ProjectManifest } from '@cadsandbox/doc'
+import type { CadDocument, DocJSON, DocSnapshot, LayerDef, PaperSize, ProjectManifest } from '@cadsandbox/doc'
+import type { LengthUnit } from '@cadsandbox/shared'
 import type { AssetResolver, GeometryService } from '@cadsandbox/geometry'
 import type { Editor } from '@cadsandbox/render'
 
 export type ImportFormat =
   | 'glb' | 'gltf' | 'obj' | 'stl' | 'ply' | '3mf' | 'fbx' | 'dae' | '3dm'
-  | 'step' | 'iges' | 'ifc' | 'dxf' | 'svg' | 'image' | 'csb' | 'csbx'
+  | 'step' | 'iges' | 'brep' | 'ifc' | 'dxf' | 'svg' | 'image' | 'pdf' | 'csb' | 'csbx'
 
 export type ExportFormat =
   | 'glb' | 'gltf' | 'obj' | 'stl' | 'ply' | '3mf' | 'usdz' | 'ifc'
@@ -30,6 +31,8 @@ export interface ImportOptions {
   levelId?: string | null
   onProgress?: (fraction: number, message: string) => void
   signal?: AbortSignal
+  /** (additive) pdf underlay: 1-based page (default 1) and raster resolution in dots per inch (default 150). */
+  pdf?: { page?: number; dpi?: number }
 }
 
 export interface ImportedAsset {
@@ -46,7 +49,13 @@ export interface ImportResult {
   warnings: string[]
   /** Only for .csb (single design) imports: the complete design document. */
   document?: DocJSON
+  /** (additive) Drafting layers referenced by the snapshot nodes' `layer` ids (DXF, 3DM, IFC…).
+   *  Add them with doc.addLayer(def) keeping the ids before inserting, or use `mergeImportLayers`. */
+  layers?: LayerDef[]
 }
+
+/** (additive) A file to import: a browser File or in-memory data with a file name. */
+export type ImportSource = File | { name: string; data: ArrayBuffer | Uint8Array | Blob | string }
 
 export interface ExportContext {
   doc: CadDocument
@@ -72,6 +81,10 @@ export interface ExportOptions {
   height?: number
   /** csv: which schedule */
   schedule?: 'rooms' | 'doors' | 'windows' | 'walls' | 'areas'
+  /** (additive) csv: ';' = German Excel (decimal comma). Default ','. */
+  csvSeparator?: ',' | ';'
+  /** (additive) pdf quick plan: paper size (default: smallest A-size that fits at `scale`). */
+  paper?: PaperSize
 }
 
 export interface ExportResult {

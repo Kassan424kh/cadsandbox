@@ -1,0 +1,368 @@
+.right {
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
+  min-height: 0;
+  background: var(--cs-bg-elevated);
+  border-left: 1px solid var(--cs-border);
+  z-index: var(--cs-z-panel);
+}
+
+.inspector {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--cs-border);
+}
+
+.typeIcon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--cs-surface-2);
+  color: var(--cs-text-2);
+  flex: none;
+}
+
+.typeIcon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.headMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.typeLabel {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nameInput {
+  height: 24px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 4px;
+  margin-left: -4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--cs-text);
+  font-family: var(--cs-font-display);
+  font-size: var(--cs-text-md);
+  font-weight: 600;
+  outline: none;
+}
+
+.nameInput:hover {
+  border-color: var(--cs-border);
+}
+
+.nameInput:focus {
+  border-color: var(--cs-accent);
+  background: var(--cs-surface);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+}
+
+.section {
+  border-bottom: 1px solid var(--cs-border);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 34px;
+  padding: 0 12px 0 8px;
+  color: var(--cs-text-2);
+  font-size: var(--cs-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  transition: color var(--cs-duration) var(--cs-ease);
+}
+
+.sectionHead:hover {
+  color: var(--cs-text);
+}
+
+.sectionHead svg {
+  width: 12px;
+  height: 12px;
+  transition: transform var(--cs-duration) var(--cs-ease);
+}
+
+.sectionOpen svg.chev {
+  transform: rotate(90deg);
+}
+
+.sectionTitle {
+  flex: 1;
+}
+
+.sectionActions {
+  display: inline-flex;
+  gap: 2px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 12px 12px;
+}
+
+.vec {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  flex: 1;
+}
+
+.vec2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lockBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: var(--cs-text-3);
+  flex: none;
+}
+
+.lockBtn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.lockBtn:hover {
+  color: var(--cs-text);
+  background: var(--cs-surface-3);
+}
+
+.lockOn {
+  color: var(--cs-accent-2);
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--cs-surface-2);
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-2);
+}
+
+.quantities {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  font-size: var(--cs-text-sm);
+}
+
+.qLabel {
+  color: var(--cs-text-2);
+}
+
+.qValue {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.mixed {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-3);
+  padding: 6px 12px 0;
+}
+
+/* Material picker */
+.matTrigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: var(--cs-control-h);
+  padding: 0 8px 0 5px;
+  border-radius: var(--cs-radius-sm);
+  background: var(--cs-surface-2);
+  border: 1px solid var(--cs-border);
+  color: var(--cs-text);
+  font-size: var(--cs-text-sm);
+  text-align: left;
+  transition: border-color var(--cs-duration) var(--cs-ease);
+}
+
+.matTrigger:hover {
+  border-color: var(--cs-border-strong);
+}
+
+.matSwatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  flex: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+    inset 0 2px 5px rgba(255, 255, 255, 0.18);
+}
+
+.matName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.matGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.matCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 2px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  color: var(--cs-text-2);
+  font-size: 9.5px;
+  line-height: 1.1;
+  text-align: center;
+  transition: border-color var(--cs-duration) var(--cs-ease);
+}
+
+.matCell:hover {
+  border-color: var(--cs-border-strong);
+  color: var(--cs-text);
+}
+
+.matCellActive {
+  border-color: var(--cs-accent);
+  color: var(--cs-text);
+}
+
+.matCell .matSwatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
+.matCellLabel {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.matGroup {
+  padding: 8px 2px 4px;
+  font-size: var(--cs-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cs-text-3);
+}
+
+.matFooter {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  padding-top: 10px;
+  margin-top: 6px;
+  border-top: 1px solid var(--cs-border);
+}
+
+/* Material editor */
+.matEditor {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 16px;
+}
+
+.matPreview {
+  aspect-ratio: 1;
+  border-radius: var(--cs-radius-md);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, var(--hl, 0.35)), transparent 45%),
+    radial-gradient(circle at 60% 70%, rgba(0, 0, 0, 0.35), transparent 60%),
+    var(--mat-color, #888);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+.matForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mapRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mapThumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--cs-surface-3);
+  object-fit: cover;
+  flex: none;
+}
+
+/* Layers editor (walls) */
+.layerRow {
+  display: grid;
+  grid-template-columns: 1fr 78px 92px 22px;
+  gap: 4px;
+  align-items: center;
+}
+
+.floatToggle {
+  position: absolute;
+  right: 14px;
+  top: 130px;
+  z-index: var(--cs-z-toolbar);
+}
+
+@media (max-width: 640px) {
+  .matEditor {
+    grid-template-columns: 1fr;
+  }
+}

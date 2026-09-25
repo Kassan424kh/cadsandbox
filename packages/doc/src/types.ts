@@ -138,6 +138,18 @@ export interface MaterialDef {
   hatch?: HatchPattern
   /** Built-in library materials are read-only in the UI (duplicate to edit). */
   builtin?: boolean
+  /** Building-physics values for U-value estimates (DIN 4108-4 / DIN EN ISO 10456 design values). */
+  thermal?: MaterialThermal
+}
+
+/** Building-physics properties of a material. */
+export interface MaterialThermal {
+  /** Thermal conductivity λ, W/(m·K) */
+  lambda: number
+  /** Bulk density ρ, kg/m³ */
+  density?: number
+  /** Water-vapour diffusion resistance factor μ (dry value) */
+  mu?: number
 }
 
 // ------------------------------------------------------------------ Node params
@@ -260,6 +272,8 @@ export interface LevelParams {
   height: number // floor-to-floor height
   cutHeight: number // plan cut plane above the level (default 1.1 m)
   number?: number // storey number (0 = ground floor)
+  /** Full storey (Vollgeschoss) override for GFZ/BMZ/storey counts; undefined = derived (LBO heuristics). */
+  fullStorey?: boolean
 }
 
 export type TextFont = 'sans' | 'serif' | 'mono' | 'display'
@@ -355,9 +369,11 @@ export interface HatchParams {
   color?: string | null
   background?: string | null
 }
-export type DimensionKind = 'linear' | 'aligned' | 'angular' | 'radius' | 'diameter' | 'arc-length'
+export type DimensionKind = 'linear' | 'aligned' | 'angular' | 'radius' | 'diameter' | 'arc-length' | 'chain'
 /** points (local 3D so dimensions can live on elevations too):
- *    linear/aligned: [p1, p2]    angular: [vertex, p1, p2]    radius/diameter: [center, pointOnCircle] */
+ *    linear/aligned: [p1, p2]    angular: [vertex, p1, p2]    radius/diameter: [center, pointOnCircle]
+ *    chain (Maßkette): [p1 … pn] — N points projected onto ONE dimension line at `offset`; every
+ *    interval gets its own text. `axis` 'x'/'y' forces the line direction, otherwise first → last. */
 export interface DimensionParams {
   kind: DimensionKind
   points: Vec3[]
@@ -370,6 +386,45 @@ export interface DimensionParams {
 export interface LeaderParams {
   points: Vec2[]
   text: string
+}
+
+// ---- Drafting symbols (local XY plane) ----
+/** Structural grid axis (Achsraster): a → b in local XY with label bubbles at the chosen ends. */
+export interface GridlineParams {
+  a: Vec2
+  b: Vec2
+  /** Bubble text, e.g. "A" or "1" */
+  label: string
+  bubble: 'start' | 'end' | 'both' | 'none'
+  /** Distance from the line end to the bubble center (m). Default 0.6. */
+  extension?: number
+  /** Bubble radius (m). Default 0.35. */
+  radius?: number
+}
+/** Height marker (Höhenkote) at the node origin. The displayed value is the node's WORLD elevation
+ *  relative to project zero (or absolute NN when `meta.units.elevationDisplay` = 'absolute'). */
+export interface LevelmarkParams {
+  /** plan: level symbol (±0.00 with triangle on a line); section: elevation flag drawn in sections/elevations too */
+  variant: 'plan' | 'section'
+  /** Text prefix, e.g. "OKFF" (finished floor) or "OKRF" (structural floor) */
+  prefix?: string
+  /** Section variant: triangle points down (default) or up */
+  flip?: boolean
+}
+/** North arrow symbol. `angle` = rotation from local +Y to true north (radians CCW, see GeoLocation.northAngle). */
+export interface NorthArrowParams {
+  size: number
+  style: 'simple' | 'compass'
+  angle: number
+}
+/** Graphic scale bar in model meters (prints at the correct paper length for `scale`). */
+export interface ScaleBarParams {
+  /** Scale denominator for the "1:n" label (100 → 1:100) */
+  scale: number
+  /** Total real length of the bar (m) */
+  length: number
+  /** Number of alternating blocks */
+  segments: number
 }
 
 // ---- Architecture / BIM (coordinates are in the node's local space, typically level space) ----
@@ -505,7 +560,16 @@ export interface RoomParams {
   fill?: string | null
   /** true = outline auto-follows the surrounding walls (re-detected when walls change) */
   auto?: boolean
+  /** WoFlV: counts toward the living area (Wohnfläche). undefined = derived from usage + name. */
+  livingSpace?: boolean
+  /** Habitable room (Aufenthaltsraum) for LBO height/daylight/escape checks. undefined = derived. */
+  habitable?: boolean
+  /** Outdoor area: DIN 277 "S" area, WoFlV share `outdoorFactor`. */
+  outdoor?: RoomOutdoorKind
+  /** WoFlV share of an outdoor area (default 0.25, at most 0.5). */
+  outdoorFactor?: number
 }
+export type RoomOutdoorKind = 'balcony' | 'terrace' | 'loggia' | 'roof-garden'
 
 export type FurnitureKind =
   | 'sofa'
@@ -592,6 +656,10 @@ export interface NodeParamsMap {
   hatch: HatchParams
   dimension: DimensionParams
   leader: LeaderParams
+  gridline: GridlineParams
+  levelmark: LevelmarkParams
+  northarrow: NorthArrowParams
+  scalebar: ScaleBarParams
   // architecture
   wall: WallParams
   opening: OpeningParams
@@ -619,6 +687,10 @@ export const DRAFTING_TYPES = [
   'hatch',
   'dimension',
   'leader',
+  'gridline',
+  'levelmark',
+  'northarrow',
+  'scalebar',
 ] as const satisfies readonly NodeType[]
 
 export const ARCH_TYPES = [
@@ -687,6 +759,10 @@ export interface UnitsSettings {
   precision: number
   angle: 'deg' | 'rad'
   area: 'm2' | 'ft2'
+  /** Height markers: NN/absolute height of project zero (±0.00) in meters. Default 0. */
+  elevationDatum?: number
+  /** Height markers show elevations relative to project zero (default) or as absolute NN heights. */
+  elevationDisplay?: 'relative' | 'absolute'
 }
 
 export interface GridSettings {
@@ -730,6 +806,65 @@ export interface DocMeta {
   /** Active/default level for new elements */
   activeLevel: string | null
   createdAt: number
+  /** Plot + development-plan data for zoning checks (GRZ/GFZ/BMZ, storeys, height) and LBO specifics. */
+  site?: SiteInfo
+  /** DIN 276 cost-estimate settings: unit-price overrides of the built-in catalog + ratios. */
+  costCatalog?: CostCatalog
+}
+
+export type BuildingType = 'residential' | 'office' | 'public' | 'other'
+
+/** Development-plan limits (Bebauungsplan / BauNVO §§ 16–21). */
+export interface ZoningLimits {
+  /** Grundflächenzahl (site coverage ratio) */
+  grz?: number
+  /** Geschossflächenzahl (floor area ratio, full storeys) */
+  gfz?: number
+  /** Baumassenzahl (building mass ratio, m³ per m² plot) */
+  bmz?: number
+  /** Maximum number of full storeys (Vollgeschosse) */
+  maxStoreys?: number
+  /** Maximum building height above ground level (m) */
+  maxHeight?: number
+}
+
+export interface SiteInfo {
+  /** Plot area in m²; when absent the area of `plotOutline` is used. */
+  plotArea?: number
+  /** Plot boundary in world XY (m). */
+  plotOutline?: Vec2[]
+  zoning?: ZoningLimits
+  buildingType?: BuildingType
+  /** Bundesland code for LBO specifics (e.g. 'BY', 'NW', 'BE'). */
+  state?: string
+  /** Ground level (Geländeoberfläche) as world Z in m (default 0). */
+  groundLevel?: number
+  /** The project must be barrier-free (DIN 18040-2): accessibility findings become failures. */
+  barrierFree?: boolean
+}
+
+/** Override of one built-in DIN 276 catalog entry (keyed by element id). */
+export interface CostItemOverride {
+  /** Unit price in `currency` per unit of the element's quantity */
+  price?: number
+  /** DIN 276 cost group code, e.g. '331' */
+  kg?: string
+  label?: string
+}
+
+export interface CostCatalog {
+  /** Overrides per element id (see DEFAULT_COST_ITEMS in @cadsandbox/geometry). */
+  items?: Record<string, CostItemOverride>
+  /** KG 400 (building services) as a fraction of KG 300; default depends on the building type. */
+  servicesRatio?: number
+  /** Regional / price-index factor applied to every unit price (default 1). */
+  regionFactor?: number
+  /** Unit prices include VAT (default true, BKI convention). */
+  vatIncluded?: boolean
+  /** VAT rate (default 0.19). */
+  vatRate?: number
+  /** Currency code (default 'EUR'). */
+  currency?: string
 }
 
 export type LineType = 'continuous' | 'dashed' | 'dotted' | 'dashdot' | 'hidden' | 'center'

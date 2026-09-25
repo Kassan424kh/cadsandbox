@@ -1,0 +1,220 @@
+.swatches {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  --sw: 22px;
+  position: relative;
+  width: var(--sw);
+  height: var(--sw);
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: transform var(--cs-duration) var(--cs-spring);
+  flex: none;
+}
+
+.swatch:hover {
+  transform: scale(1.12);
+}
+
+.swatch:active {
+  transform: scale(0.95);
+}
+
+.swatchSelected::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--cs-text);
+}
+
+.swatchSm {
+  --sw: 16px;
+}
+
+.swatchLg {
+  --sw: 28px;
+}
+
+.swatchSquare {
+  border-radius: 7px;
+}
+
+.swatchSquare.swatchSelected::after {
+  border-radius: 10px;
+}
+
+.swatchNone {
+  background:
+    linear-gradient(to top right, transparent 45%, var(--cs-danger) 46%, var(--cs-danger) 54%, transparent 55%),
+    var(--cs-surface-3);
+}
+
+.swatch:focus-visible {
+  box-shadow: var(--cs-focus-ring);
+  border-radius: 50%;
+}
+
+.more {
+  --sw: 22px;
+  display: inline-grid;
+  place-items: center;
+  width: var(--sw);
+  height: var(--sw);
+  border-radius: 50%;
+  color: var(--cs-text-2);
+  background: var(--cs-surface-3);
+  transition:
+    background-color var(--cs-duration) var(--cs-ease),
+    color var(--cs-duration) var(--cs-ease);
+}
+
+.more:hover {
+  color: var(--cs-text);
+  background: var(--cs-border-strong);
+}
+
+.more svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Picker */
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 232px;
+}
+
+.area {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.45;
+  border-radius: 10px;
+  background:
+    linear-gradient(to top, #000, transparent),
+    linear-gradient(to right, #fff, hsl(var(--h) 100% 50%));
+  cursor: crosshair;
+  touch-action: none;
+  overflow: hidden;
+}
+
+.areaThumb,
+.hueThumb {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.4);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.hue {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.hueThumb {
+  top: 50%;
+}
+
+.pickerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--swatch);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+  flex: none;
+}
+
+.pickerSwatches {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+
+.pickerSwatches .swatch {
+  --sw: 20px;
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+  border-radius: 6px;
+}
+
+.pickerSwatches .swatchSelected::after {
+  border-radius: 9px;
+  inset: -3px;
+}
+
+/* Trigger button (input-like) */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--cs-control-h);
+  padding: 0 8px 0 5px;
+  border-radius: var(--cs-radius-sm);
+  background: var(--cs-surface-2);
+  border: 1px solid var(--cs-border);
+  color: var(--cs-text);
+  font-size: var(--cs-text-sm);
+  font-family: var(--cs-font-mono);
+  min-width: 0;
+  width: 100%;
+  transition: border-color var(--cs-duration) var(--cs-ease);
+}
+
+.trigger:hover {
+  border-color: var(--cs-border-strong);
+}
+
+.triggerSm {
+  height: var(--cs-control-h-sm);
+  font-size: var(--cs-text-xs);
+  border-radius: 8px;
+}
+
+.triggerSwatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: var(--swatch);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+  flex: none;
+}
+
+.triggerText {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.triggerMixed {
+  color: var(--cs-text-3);
+  font-style: italic;
+  font-family: var(--cs-font-sans);
+}

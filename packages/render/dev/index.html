@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CadSandbox · render dev harness</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: var(--cs-bg, #0b0b0d); color: var(--cs-text, #f4f4f6); font: 13px/1.4 Inter, system-ui, sans-serif; }
+      #app { position: fixed; inset: 0; display: grid; grid-template-rows: 44px 1fr 28px; }
+      #bar { display: flex; gap: 6px; align-items: center; padding: 0 10px; border-bottom: 1px solid var(--cs-border, rgba(255,255,255,.08)); background: var(--cs-bg-elevated, #121215); flex-wrap: wrap; }
+      #bar button, #bar select { background: var(--cs-surface, #19191d); color: var(--cs-text, #f4f4f6); border: 1px solid var(--cs-border-strong, rgba(255,255,255,.16)); border-radius: 8px; padding: 4px 9px; font: inherit; cursor: pointer; }
+      #bar button.on { background: var(--cs-accent, #7c5cff); border-color: transparent; color: #fff; }
+      #viewport { position: relative; overflow: hidden; }
+      #status { display: flex; gap: 16px; align-items: center; padding: 0 10px; border-top: 1px solid var(--cs-border, rgba(255,255,255,.08)); background: var(--cs-bg-elevated, #121215); color: var(--cs-text-2, #b3b3bb); font-size: 12px; white-space: nowrap; overflow: hidden; }
+      #status .vcb { margin-left: auto; font-family: ui-monospace, monospace; color: var(--cs-text, #f4f4f6); }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="bar"></div>
+      <div id="viewport"></div>
+      <div id="status"><span id="hint"></span><span id="stats"></span><span class="vcb" id="vcb"></span></div>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

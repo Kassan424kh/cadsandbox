@@ -1,0 +1,105 @@
+/* Mirrors the UI-kit Button look for links (tokens only). */
+.button {
+  --btn-h: var(--cs-control-h, 32px);
+  --btn-px: 12px;
+  --btn-fs: var(--cs-text-sm, 13px);
+  --btn-icon: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: var(--btn-h);
+  padding: 0 var(--btn-px);
+  border-radius: var(--cs-radius-pill);
+  font-size: var(--btn-fs);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--cs-text);
+  background: var(--cs-surface-2);
+  border: 1px solid transparent;
+  text-decoration: none;
+  transition:
+    background-color var(--cs-duration) var(--cs-ease),
+    color var(--cs-duration) var(--cs-ease),
+    border-color var(--cs-duration) var(--cs-ease),
+    transform var(--cs-duration) var(--cs-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.button:hover {
+  text-decoration: none;
+}
+
+.button:active {
+  transform: scale(0.965);
+}
+
+.button:focus-visible {
+  box-shadow: var(--cs-focus-ring, 0 0 0 2px var(--cs-focus));
+  border-radius: var(--cs-radius-pill);
+}
+
+.button svg {
+  width: var(--btn-icon);
+  height: var(--btn-icon);
+  flex: none;
+}
+
+.sm {
+  --btn-h: var(--cs-control-h-sm, 28px);
+  --btn-px: 10px;
+  --btn-fs: var(--cs-text-xs, 12px);
+  --btn-icon: 14px;
+}
+
+.lg {
+  --btn-h: var(--cs-control-h-lg, 40px);
+  --btn-px: 18px;
+  --btn-fs: var(--cs-text-md, 14px);
+  --btn-icon: 18px;
+}
+
+.primary {
+  background: var(--cs-accent);
+  color: var(--cs-accent-contrast);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.primary:hover {
+  background: var(--cs-accent-2);
+  color: var(--cs-accent-contrast);
+}
+
+.secondary {
+  background: var(--cs-surface-2);
+  border-color: var(--cs-border);
+}
+
+.secondary:hover {
+  background: var(--cs-surface-3);
+  border-color: var(--cs-border-strong);
+  color: var(--cs-text);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--cs-text-2);
+}
+
+.ghost:hover {
+  background: var(--cs-surface-2);
+  color: var(--cs-text);
+}
+
+.danger {
+  background: transparent;
+  color: var(--cs-danger);
+  border-color: color-mix(in srgb, var(--cs-danger) 35%, transparent);
+}
+
+.danger:hover {
+  background: color-mix(in srgb, var(--cs-danger) 14%, transparent);
+}

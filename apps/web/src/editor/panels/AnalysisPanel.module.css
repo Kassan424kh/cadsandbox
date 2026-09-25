@@ -1,0 +1,288 @@
+/* Analysis panel (DIN 277 / WoFlV / zoning / DIN 276 / GEG / checks) */
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+}
+
+.section {
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--cs-border);
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 2px 0 6px;
+  font-size: var(--cs-text-xs);
+  font-weight: 600;
+  color: var(--cs-text-2);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.stat {
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: var(--cs-surface);
+  border: 1px solid var(--cs-border);
+  min-width: 0;
+}
+
+.statLabel {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statValue {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--cs-text-md);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.scrollX {
+  overflow-x: auto;
+}
+
+.mini {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--cs-text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.mini th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--cs-text-3);
+  padding: 3px 4px;
+  border-bottom: 1px solid var(--cs-border);
+  white-space: nowrap;
+}
+
+.mini td {
+  padding: 3px 4px;
+  border-bottom: 1px solid var(--cs-border);
+  white-space: nowrap;
+}
+
+.mini .num {
+  text-align: right;
+}
+
+.mini tfoot td {
+  font-weight: 600;
+  border-bottom: none;
+  border-top: 1px solid var(--cs-border-strong);
+}
+
+.clickRow {
+  cursor: pointer;
+}
+
+.clickRow:hover td {
+  background: var(--cs-surface-2);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 6px;
+  font-size: var(--cs-text-xs);
+  cursor: pointer;
+}
+
+.row:hover {
+  background: var(--cs-surface-2);
+}
+
+.rowActive,
+.rowActive:hover {
+  background: var(--cs-accent-soft);
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--cs-text-3);
+}
+
+.value {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 4px;
+  border-radius: 50%;
+}
+
+.pass {
+  background: var(--cs-success);
+}
+
+.warn {
+  background: var(--cs-warning);
+}
+
+.fail {
+  background: var(--cs-danger);
+}
+
+.info {
+  background: var(--cs-info);
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.check:hover {
+  background: var(--cs-surface-2);
+}
+
+.checkText {
+  font-size: var(--cs-text-xs);
+  line-height: 1.35;
+  color: var(--cs-text);
+}
+
+.rule {
+  font-size: 10.5px;
+  color: var(--cs-text-3);
+}
+
+.groupHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 2px;
+  font-size: var(--cs-text-xs);
+  font-weight: 600;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 8px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-2);
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.costLine {
+  padding: 5px 4px;
+  border-bottom: 1px solid var(--cs-border);
+  font-size: var(--cs-text-xs);
+}
+
+.costHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.costCalc {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  color: var(--cs-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.priceField {
+  width: 92px;
+  flex: none;
+}
+
+.kgCode {
+  flex: none;
+  min-width: 26px;
+  font-variant-numeric: tabular-nums;
+  color: var(--cs-text-3);
+}
+
+.group {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 4px 2px;
+  font-size: var(--cs-text-xs);
+  font-weight: 600;
+}
+
+.flags {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 8px;
+  margin-top: 6px;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--cs-surface);
+  border: 1px solid var(--cs-border);
+}
+
+.note {
+  margin-top: 6px;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--cs-text-3);
+}
+
+.disclaimer {
+  padding: 10px;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--cs-text-3);
+}
+
+.error {
+  padding: 10px;
+  font-size: var(--cs-text-xs);
+  color: var(--cs-danger);
+}

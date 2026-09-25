@@ -1,0 +1,129 @@
+/* Tabs (underline) and SegmentedControl (pill) */
+.tabsList {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-bottom: 1px solid var(--cs-border);
+  padding: 0 4px;
+}
+
+.tabsTrigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  color: var(--cs-text-2);
+  font-size: var(--cs-text-sm);
+  font-weight: 500;
+  border-radius: var(--cs-radius-xs);
+  transition: color var(--cs-duration) var(--cs-ease);
+  white-space: nowrap;
+}
+
+.tabsTrigger svg {
+  width: 15px;
+  height: 15px;
+}
+
+.tabsTrigger:hover {
+  color: var(--cs-text);
+}
+
+.tabsTrigger[data-state='active'] {
+  color: var(--cs-text);
+}
+
+.tabsTrigger[data-state='active']::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--cs-accent);
+}
+
+.tabsContent {
+  outline: none;
+}
+
+.tabsContent:focus-visible {
+  box-shadow: none;
+}
+
+/* Pill tabs / segmented control */
+.segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--cs-radius-pill);
+  background: var(--cs-surface-2);
+  border: 1px solid var(--cs-border);
+}
+
+.segmentedFull {
+  display: flex;
+  width: 100%;
+}
+
+.segmentedFull .segment {
+  flex: 1;
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--cs-radius-pill);
+  color: var(--cs-text-2);
+  font-size: var(--cs-text-xs);
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color var(--cs-duration) var(--cs-ease),
+    color var(--cs-duration) var(--cs-ease),
+    box-shadow var(--cs-duration) var(--cs-ease);
+}
+
+.segment svg {
+  width: 14px;
+  height: 14px;
+}
+
+.segment:hover {
+  color: var(--cs-text);
+}
+
+.segment[data-state='on'],
+.segment[aria-checked='true'] {
+  background: var(--cs-surface);
+  color: var(--cs-text);
+  box-shadow: var(--cs-shadow-1);
+}
+
+.segment:disabled {
+  opacity: 0.4;
+}
+
+.segmentIconOnly {
+  width: 26px;
+  padding: 0;
+}
+
+.segmentedSm .segment {
+  height: 20px;
+  padding: 0 8px;
+  font-size: 10.5px;
+}
+
+.segmentedSm .segmentIconOnly {
+  width: 22px;
+}
+

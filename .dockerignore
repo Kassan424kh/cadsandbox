@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/.turbo
+**/coverage
+**/*.log
+**/.DS_Store
+**/.env
+**/.env.*
+!**/.env.example
+apps/server/data
+apps/desktop/src-tauri/target
+.git
+.github
+*.tsbuildinfo

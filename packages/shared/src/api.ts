@@ -292,6 +292,17 @@ export const schemas = {
   acceptLink: z.object({ password: z.string().max(128).optional() }),
   setOrgGrant: z.object({ role: grantRole }),
   createVersion: z.object({ docName: z.string().max(200), name: name }),
+  addComment: z.object({
+    docName: z.string().max(200),
+    text: z.string().trim().min(1).max(5000),
+    anchor: z.object({
+      nodeId: z.string().max(64).optional(),
+      point: z.tuple([z.number(), z.number(), z.number()]).optional(),
+      viewId: z.string().max(64).optional(),
+    }),
+  }),
+  replyComment: z.object({ docName: z.string().max(200), text: z.string().trim().min(1).max(5000) }),
+  resolveComment: z.object({ docName: z.string().max(200), resolved: z.boolean() }),
   createCollection: z.object({ name, orgId: id.nullable().optional() }),
   updateCollection: z.object({ name }),
   createCollectionItem: z.object({
@@ -370,6 +381,12 @@ export const routes = {
   setOrgGrant: 'PUT /api/projects/:id/orgs/:orgId',
   removeOrgGrant: 'DELETE /api/projects/:id/orgs/:orgId',
   orgProjects: 'GET /api/orgs/:orgId/projects', // → ProjectDTO[] shared with / owned in org
+
+  // Comments via REST: lets `commenter` role users (read-only on the Yjs doc) comment; the server
+  // applies the change to the collab doc's `comments` map so everyone sees it live.
+  addComment: 'POST /api/projects/:id/comments', // schemas.addComment → { id }
+  replyComment: 'POST /api/projects/:id/comments/:commentId/replies', // schemas.replyComment
+  resolveComment: 'PATCH /api/projects/:id/comments/:commentId', // schemas.resolveComment
 
   getBlob: 'GET /api/projects/:id/blobs/:hash', // hash = sha256 hex; immutable, cacheable
   headBlob: 'HEAD /api/projects/:id/blobs/:hash',

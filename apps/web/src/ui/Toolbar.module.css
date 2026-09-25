@@ -1,0 +1,255 @@
+/* Floating glass pill toolbars and icon-over-label tool buttons (the product's signature chrome). */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+  border-radius: var(--cs-radius-pill);
+  background: var(--cs-glass);
+  -webkit-backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  border: 1px solid var(--cs-glass-border);
+  box-shadow:
+    var(--cs-shadow-2),
+    inset 0 1px 0 var(--cs-glass-highlight);
+  pointer-events: auto;
+  max-width: 100%;
+}
+
+.vertical {
+  flex-direction: column;
+}
+
+.pillSm {
+  padding: 3px;
+}
+
+.separator {
+  align-self: stretch;
+  width: 1px;
+  margin: 8px 4px;
+  background: var(--cs-border-strong);
+  flex: none;
+}
+
+.vertical .separator {
+  width: auto;
+  height: 1px;
+  margin: 4px 8px;
+}
+
+/* Tool button: icon over label */
+.tool {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: var(--cs-tool-w);
+  height: var(--cs-tool-h);
+  padding: 0 8px;
+  border-radius: var(--cs-radius-pill);
+  color: var(--cs-text-2);
+  font-size: var(--cs-text-xs);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--cs-duration) var(--cs-ease),
+    color var(--cs-duration) var(--cs-ease),
+    transform var(--cs-duration) var(--cs-spring),
+    opacity var(--cs-duration) var(--cs-ease);
+}
+
+.tool svg {
+  width: var(--cs-tool-icon);
+  height: var(--cs-tool-icon);
+  stroke-width: 1.6;
+  transition: transform var(--cs-duration-slow) var(--cs-spring);
+}
+
+.tool:hover:not(:disabled) {
+  color: var(--cs-text);
+  background: color-mix(in srgb, var(--cs-text) 8%, transparent);
+}
+
+.tool:hover:not(:disabled) svg {
+  transform: translateY(-1px);
+}
+
+.tool:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.tool:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.tool:focus-visible {
+  box-shadow: var(--cs-focus-ring);
+  border-radius: var(--cs-radius-pill);
+}
+
+.toolActive,
+.toolActive:hover:not(:disabled) {
+  background: var(--cs-inverse);
+  color: var(--cs-on-inverse);
+}
+
+.toolAccent,
+.toolAccent:hover:not(:disabled) {
+  background: var(--cs-accent);
+  color: var(--cs-accent-contrast);
+}
+
+.toolCompact {
+  min-width: 44px;
+  height: 44px;
+  gap: 3px;
+}
+
+.toolCompact svg {
+  width: 18px;
+  height: 18px;
+}
+
+.toolCompact .toolLabel {
+  font-size: 10px;
+}
+
+.toolIconOnly {
+  min-width: var(--cs-tool-h);
+  padding: 0;
+}
+
+.toolLabel {
+  display: block;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toolBadge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cs-accent);
+  box-shadow: 0 0 0 2px var(--cs-glass);
+}
+
+.toolChevron {
+  position: absolute;
+  right: 5px;
+  bottom: 7px;
+  width: 9px !important;
+  height: 9px !important;
+  opacity: 0.6;
+  stroke-width: 2.4 !important;
+}
+
+/* Round single-action button (Back, Snap, chevron) */
+.roundBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--cs-text);
+  background: var(--cs-glass);
+  -webkit-backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  border: 1px solid var(--cs-glass-border);
+  box-shadow:
+    var(--cs-shadow-2),
+    inset 0 1px 0 var(--cs-glass-highlight);
+  transition:
+    background-color var(--cs-duration) var(--cs-ease),
+    transform var(--cs-duration) var(--cs-spring),
+    color var(--cs-duration) var(--cs-ease);
+}
+
+.roundBtn svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.75;
+}
+
+.roundBtn:hover:not(:disabled) {
+  background: var(--cs-glass-strong);
+}
+
+.roundBtn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.roundBtn:disabled {
+  opacity: 0.4;
+}
+
+.roundBtn:focus-visible {
+  box-shadow: var(--cs-focus-ring);
+  border-radius: 50%;
+}
+
+.roundBtnSm {
+  width: 32px;
+  height: 32px;
+}
+
+.roundBtnSm svg {
+  width: 16px;
+  height: 16px;
+}
+
+.roundBtnActive,
+.roundBtnActive:hover:not(:disabled) {
+  background: var(--cs-inverse);
+  color: var(--cs-on-inverse);
+}
+
+/* Glass chip (viewport corner labels) */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--cs-radius-pill);
+  background: var(--cs-glass);
+  -webkit-backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  border: 1px solid var(--cs-glass-border);
+  box-shadow:
+    var(--cs-shadow-1),
+    inset 0 1px 0 var(--cs-glass-highlight);
+  color: var(--cs-text-2);
+  font-size: var(--cs-text-xs);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition:
+    background-color var(--cs-duration) var(--cs-ease),
+    color var(--cs-duration) var(--cs-ease);
+}
+
+.chip svg {
+  width: 14px;
+  height: 14px;
+}
+
+button.chip:hover {
+  color: var(--cs-text);
+  background: var(--cs-glass-strong);
+}
+
+.chipActive {
+  color: var(--cs-text);
+}

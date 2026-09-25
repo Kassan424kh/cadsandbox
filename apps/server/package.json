@@ -9,16 +9,22 @@
     "start": "node --env-file-if-exists=.env dist/index.js",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "cli": "tsx --env-file-if-exists=.env src/cli.ts"
   },
   "dependencies": {
+    "@better-auth/passkey": "1.7.6",
+    "@cadsandbox/doc": "workspace:*",
     "@cadsandbox/shared": "workspace:*",
     "@electric-sql/pglite": "^0.5.8",
     "@hocuspocus/extension-database": "^4.7.0",
     "@hocuspocus/server": "^4.7.0",
     "@hono/node-server": "^2.1.1",
+    "aws4fetch": "^1.0.20",
     "better-auth": "^1.7.6",
+    "crossws": "0.4.12",
     "drizzle-orm": "^0.45.3",
+    "fflate": "^0.8.3",
     "hono": "^4.13.9",
     "nodemailer": "^10.0.10",
     "pg": "^8.23.0",

@@ -39,6 +39,10 @@ export interface EditorOptions {
   theme: Theme
   readOnly?: boolean
   quality?: Quality
+  /** Draw the engine's built-in viewport label under the view cube (default true; the UI may render its own chips). */
+  showViewportLabels?: boolean
+  /** CSS px offset of the view cube from the viewport's top-left corner (default 12/12); see Editor.setViewCubeOffset. */
+  viewCubeOffset?: { top: number; left: number }
 }
 
 // ------------------------------------------------------------------ views
@@ -94,6 +98,12 @@ export type ToolId =
   | 'annotate.dimension'
   | 'annotate.leader'
   | 'annotate.comment'
+  | 'annotate.chain' // Maßkette: N stations on one dimension line
+  | 'annotate.grid' // structural grid axes (Achsraster) with label bubbles
+  | 'annotate.levelmark' // height markers (Höhenkoten)
+  | 'annotate.cloud' // revision cloud on the red Markup layer
+  | 'annotate.markup' // freehand redline pen
+  | 'annotate.calibrate' // scale an image underlay by a known distance
   | 'modify.pushpull'
   | 'modify.offset'
   | 'modify.trim'
@@ -123,6 +133,16 @@ export interface SnapSettings {
   ortho: boolean
   /** Pixel radius for object snaps */
   radiusPx: number
+}
+
+/** Camera navigation preferences (device-level, persisted by the app). */
+export interface NavigationSettings {
+  /**
+   * Trackpad mapping: two-finger scroll pans (ortho) / orbits (perspective) and only pinch zooms.
+   * Off (default): the wheel always zooms to the cursor — mouse wheels on macOS emit small,
+   * irregular deltas that cannot be told apart from a trackpad reliably.
+   */
+  trackpadGestures: boolean
 }
 
 export interface MeasureResult {
@@ -181,6 +201,7 @@ export interface EditorState {
   viewports: ViewportState[]
   activeViewport: number
   snapping: SnapSettings
+  navigation: NavigationSettings
   gridVisible: boolean
   activeLevel: string | null
   /** Isolation mode: only these nodes are visible */
@@ -367,6 +388,10 @@ export interface Editor {
   setActiveViewport(index: number): void
   setActiveLevel(levelId: string | null): void
   setSnapping(patch: Partial<SnapSettings>): void
+  /** Navigation preferences (device-level; the app persists them). */
+  setNavigation(patch: Partial<NavigationSettings>): void
+  /** Move the view cube (CSS px from the viewport's top-left) so UI chrome never covers it. */
+  setViewCubeOffset(offset: { top: number; left: number }): void
   setGizmo(mode: GizmoMode): void
   setTheme(theme: Theme): void
   setQuality(q: Quality): void
@@ -382,6 +407,8 @@ export interface Editor {
   /** Show a drop preview ghost while dragging over the canvas; null clears it. */
   dragPreview(content: DocSnapshot | NewNode[] | null, clientX?: number, clientY?: number): void
   pick(clientX: number, clientY: number): { nodeId: string | null; point: Vec3; normal: Vec3 | null } | null
+  /** Client-pixel position of a world point in a viewport (comment pins, HTML anchors). null when the viewport does not exist. */
+  project(world: Vec3, viewport?: number): { x: number; y: number; visible: boolean } | null
 
   // output
   /** PNG/WebP of a viewport (thumbnails, renders). Realistic mode renders progressively until `samples`. */

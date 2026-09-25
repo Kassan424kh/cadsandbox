@@ -1,0 +1,496 @@
+/* Editor shell: docked rails + full-bleed stage with floating glass chrome. */
+.shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: 1fr auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--cs-bg);
+  color: var(--cs-text);
+  overflow: hidden;
+}
+
+.stage {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--cs-viewport-bg);
+  isolation: isolate;
+}
+
+.canvasHost {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  touch-action: none;
+  outline: none;
+}
+
+.canvasHost canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+
+/* Placeholder while the render engine is unavailable */
+.placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--cs-grid-minor) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cs-grid-minor) 1px, transparent 1px),
+    linear-gradient(var(--cs-grid-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cs-grid-major) 1px, transparent 1px);
+  background-size:
+    16px 16px,
+    16px 16px,
+    160px 160px,
+    160px 160px;
+  background-position: center;
+}
+
+.placeholder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 60%, transparent 30%, var(--cs-viewport-bg) 85%);
+}
+
+.placeholderCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 22px 26px;
+  border-radius: var(--cs-radius-lg);
+  color: var(--cs-text-2);
+  font-size: var(--cs-text-sm);
+  max-width: 340px;
+  pointer-events: auto;
+}
+
+.placeholderTitle {
+  font-family: var(--cs-font-display);
+  font-size: var(--cs-text-lg);
+  font-weight: 600;
+  color: var(--cs-text);
+}
+
+.placeholderSplit {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: var(--cs-border-strong);
+}
+
+.placeholderGround {
+  position: absolute;
+  left: 55%;
+  right: 6%;
+  bottom: 18%;
+  height: 34%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--cs-text) 9%, transparent), transparent 70%);
+  filter: blur(6px);
+}
+
+/* Floating chrome anchors */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: var(--cs-z-toolbar);
+  pointer-events: none;
+}
+
+.overlay > * {
+  pointer-events: auto;
+}
+
+.topLeft {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topCenter {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.topRight {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.underTopRight {
+  position: absolute;
+  top: 78px;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.bottomLeft {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+}
+
+.bottomCenter {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 320px);
+}
+
+.bottomRight {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+}
+
+.enter {
+  animation: cs-slide-up var(--cs-duration-slow) var(--cs-spring) both;
+}
+
+/* Project name pill */
+.namePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 6px 0 16px;
+  border-radius: var(--cs-radius-pill);
+  background: var(--cs-glass);
+  -webkit-backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  border: 1px solid var(--cs-glass-border);
+  box-shadow:
+    var(--cs-shadow-2),
+    inset 0 1px 0 var(--cs-glass-highlight);
+  font-family: var(--cs-font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--cs-text);
+  max-width: 320px;
+}
+
+.nameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nameInput {
+  height: 28px;
+  min-width: 120px;
+  width: 200px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 6px;
+  background: var(--cs-surface);
+  color: var(--cs-text);
+  font: inherit;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--cs-accent);
+}
+
+.nameChevron {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cs-text) 8%, transparent);
+  color: var(--cs-text);
+  transition: background-color var(--cs-duration) var(--cs-ease);
+}
+
+.nameChevron:hover {
+  background: color-mix(in srgb, var(--cs-text) 14%, transparent);
+}
+
+.nameChevron svg {
+  width: 15px;
+  height: 15px;
+}
+
+.readOnlyBadge {
+  margin-left: 4px;
+}
+
+/* Tool options bar */
+.optionsBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 8px 0 14px;
+  border-radius: var(--cs-radius-pill);
+  background: var(--cs-glass);
+  -webkit-backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  border: 1px solid var(--cs-glass-border);
+  box-shadow:
+    var(--cs-shadow-2),
+    inset 0 1px 0 var(--cs-glass-highlight);
+  animation: cs-slide-up var(--cs-duration-slow) var(--cs-spring) both;
+  --cs-pop-y: -6px;
+  max-width: min(92vw, 900px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.optionsBar::-webkit-scrollbar {
+  display: none;
+}
+
+.optionTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--cs-text-sm);
+  font-weight: 600;
+  color: var(--cs-text);
+  white-space: nowrap;
+  padding-right: 6px;
+  border-right: 1px solid var(--cs-border-strong);
+}
+
+.optionTitle svg {
+  width: 15px;
+  height: 15px;
+  color: var(--cs-text-2);
+}
+
+.option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.optionLabel {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-2);
+}
+
+.optionField {
+  width: 92px;
+}
+
+.optionSelect {
+  width: 128px;
+}
+
+/* Viewport chips */
+.viewportChips {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.viewportLabel {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cs-text-3);
+  font-size: var(--cs-text-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.viewportActive {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--cs-accent) 40%, transparent),
+    var(--cs-shadow-1);
+}
+
+.layoutSwitch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--cs-radius-pill);
+  background: var(--cs-glass);
+  -webkit-backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  border: 1px solid var(--cs-glass-border);
+  box-shadow:
+    var(--cs-shadow-1),
+    inset 0 1px 0 var(--cs-glass-highlight);
+}
+
+.layoutBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 24px;
+  border-radius: var(--cs-radius-pill);
+  color: var(--cs-text-3);
+  transition:
+    background-color var(--cs-duration) var(--cs-ease),
+    color var(--cs-duration) var(--cs-ease);
+}
+
+.layoutBtn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.layoutBtn:hover {
+  color: var(--cs-text);
+}
+
+.layoutBtnActive,
+.layoutBtnActive:hover {
+  background: var(--cs-inverse);
+  color: var(--cs-on-inverse);
+}
+
+/* Drop overlay */
+.dropOverlay {
+  position: absolute;
+  inset: 10px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--cs-accent);
+  border-radius: var(--cs-radius-lg);
+  background: color-mix(in srgb, var(--cs-accent) 8%, transparent);
+  color: var(--cs-text);
+  font-size: var(--cs-text-md);
+  font-weight: 600;
+  pointer-events: none;
+  animation: cs-fade-in var(--cs-duration) var(--cs-ease);
+}
+
+.dropCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: var(--cs-radius-pill);
+  background: var(--cs-glass-strong);
+  border: 1px solid var(--cs-glass-border);
+  box-shadow: var(--cs-shadow-2);
+}
+
+/* Presence */
+.presence {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 8px;
+  border-radius: var(--cs-radius-pill);
+  background: var(--cs-glass);
+  -webkit-backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  border: 1px solid var(--cs-glass-border);
+  box-shadow:
+    var(--cs-shadow-2),
+    inset 0 1px 0 var(--cs-glass-highlight);
+}
+
+.syncDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cs-text-3);
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+  flex: none;
+}
+
+.syncSynced {
+  background: var(--cs-success);
+  color: var(--cs-success);
+}
+
+.syncSyncing,
+.syncConnecting {
+  background: var(--cs-info);
+  color: var(--cs-info);
+  animation: sync-pulse 1.2s ease-in-out infinite;
+}
+
+.syncOffline {
+  background: var(--cs-warning);
+  color: var(--cs-warning);
+}
+
+.syncError {
+  background: var(--cs-danger);
+  color: var(--cs-danger);
+}
+
+.syncLocal {
+  background: var(--cs-text-3);
+  color: var(--cs-text-3);
+}
+
+@keyframes sync-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* Phone (simplified viewer) */
+@media (max-width: 640px) {
+  .topLeft {
+    top: 10px;
+    left: 10px;
+  }
+
+  .topRight {
+    top: 10px;
+    right: 10px;
+  }
+
+  .bottomCenter {
+    bottom: 10px;
+    max-width: calc(100% - 20px);
+  }
+
+  .namePill {
+    max-width: 160px;
+    font-size: 13px;
+    height: 40px;
+  }
+}

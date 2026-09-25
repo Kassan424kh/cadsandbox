@@ -1,0 +1,87 @@
+# CadSandbox production stack: Caddy (TLS) → app (web + API + /collab) → Postgres 17.
+#   cp apps/server/.env.example .env   # fill in PUBLIC_URL, secrets, SMTP, …
+#   DOMAIN=cad.example.eu docker compose up -d --build
+# See docs/DEPLOYMENT.md.
+name: cadsandbox
+
+# Bounded log retention (privacy): ~50 MB per service, rotated.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '5'
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cadsandbox
+      POSTGRES_USER: cadsandbox
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_INITDB_ARGS: --data-checksums
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U cadsandbox -d cadsandbox']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+
+  app:
+    build: .
+    image: cadsandbox:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://cadsandbox:${POSTGRES_PASSWORD}@db:5432/cadsandbox
+      DATA_DIR: /data
+      TRUST_PROXY: 'true'
+      TRUSTED_PROXIES: 172.16.0.0/12
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - appdata:/data
+    networks: [internal, edge]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN (e.g. cad.example.eu)}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./apps/server/deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [app]
+    networks: [edge]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+
+networks:
+  internal:
+    internal: true
+  edge: {}
+
+volumes:
+  pgdata: {}
+  appdata: {}
+  caddy_data: {}
+  caddy_config: {}

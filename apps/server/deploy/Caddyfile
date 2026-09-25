@@ -1,0 +1,42 @@
+# Caddy in front of CadSandbox: automatic TLS (Let's Encrypt), HTTP/3, compression, access logs
+# without IP addresses. Security headers are set by the app itself on every response.
+# Caddy is the edge: X-Forwarded-For is overwritten with the real peer address below, so clients
+# cannot spoof it. If you add a load balancer in front, configure `trusted_proxies` and use {client_ip}.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Privacy: no client IPs / cookies / auth headers in proxy logs.
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>remote_ip delete
+				request>client_ip delete
+				request>headers>Cookie delete
+				request>headers>Authorization delete
+				request>uri query {
+					replace token REDACTED
+				}
+				resp_headers>Set-Cookie delete
+			}
+		}
+	}
+
+	request_body {
+		max_size 210MB
+	}
+
+	reverse_proxy app:8787 {
+		# WebSockets (/collab) are proxied transparently.
+		header_up X-Forwarded-For {remote_host}
+		transport http {
+			read_timeout 15m
+			write_timeout 15m
+		}
+	}
+}

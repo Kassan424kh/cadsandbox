@@ -12,7 +12,9 @@ projects, blobs and relays CRDT updates.
 2. **Local-first.** Everything works offline without an account (IndexedDB). Signing in adds cloud
    sync, sharing, collaboration, organisations. Same code paths for both.
 3. **Performance by default.** Render-on-demand (no frames when nothing changes), geometry in a
-   worker pool, BVH picking, GPU instancing for components, adaptive resolution while navigating,
+   worker pool, BVH picking, GPU instancing for components, static node geometry and feature edges
+   merged into a few BatchedMesh multi-draw batches (per-instance matrix/visibility; selected nodes
+   are pulled out for outlines), adaptive resolution while navigating,
    progressive path tracing only when idle, lazy-loaded WASM for heavy formats.
 4. **Privacy by design (DSGVO/GDPR).** No third-party requests at all (fonts, wasm, icons are
    self-hosted; cross-origin isolation enforces it), no tracking, only a strictly-necessary session

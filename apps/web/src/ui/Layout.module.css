@@ -1,0 +1,479 @@
+/* Avatar, ScrollArea, Splitter, Tree, Table */
+
+/* ---- Avatar ---- */
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--avatar-color);
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  flex: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  user-select: none;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarRing {
+  box-shadow:
+    0 0 0 2px var(--cs-bg),
+    0 0 0 4px var(--avatar-color);
+}
+
+.avatarMuted {
+  opacity: 0.5;
+  filter: saturate(0.4);
+}
+
+.avatarStack {
+  display: inline-flex;
+  align-items: center;
+}
+
+.avatarBtn {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  margin-left: calc(var(--avatar-size) * -0.28);
+  border: 2px solid var(--cs-glass-strong);
+  background: var(--cs-glass-strong);
+  transition: transform var(--cs-duration) var(--cs-spring);
+}
+
+.avatarBtn:first-child {
+  margin-left: 0;
+}
+
+button.avatarBtn:hover {
+  transform: translateY(-2px) scale(1.05);
+  z-index: 1;
+}
+
+.avatarBtn:focus-visible {
+  border-radius: 50%;
+}
+
+.avatarMore {
+  border-radius: 50%;
+  background: var(--cs-surface-3);
+  color: var(--cs-text-2);
+  font-weight: 600;
+}
+
+/* ---- ScrollArea ---- */
+.scrollRoot {
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  --scrollbar-size: 8px;
+}
+
+.scrollViewport {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.scrollViewport > div {
+  display: block !important;
+}
+
+.scrollbar {
+  display: flex;
+  user-select: none;
+  touch-action: none;
+  padding: 2px;
+  transition: opacity var(--cs-duration) var(--cs-ease);
+}
+
+.scrollbar[data-orientation='vertical'] {
+  width: var(--scrollbar-size);
+}
+
+.scrollbar[data-orientation='horizontal'] {
+  flex-direction: column;
+  height: var(--scrollbar-size);
+}
+
+.scrollThumb {
+  flex: 1;
+  background: var(--cs-border-strong);
+  border-radius: 999px;
+  position: relative;
+}
+
+.scrollThumb::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.scrollbar:hover .scrollThumb {
+  background: var(--cs-text-3);
+}
+
+/* ---- Splitter / resizable panel ---- */
+.panel {
+  position: relative;
+  flex: none;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.handle {
+  position: absolute;
+  z-index: 2;
+  touch-action: none;
+}
+
+.handleLeft,
+.handleRight {
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+}
+
+.handleLeft {
+  left: -4px;
+}
+
+.handleRight {
+  right: -4px;
+}
+
+.handleTop,
+.handleBottom {
+  left: 0;
+  right: 0;
+  height: 8px;
+  cursor: row-resize;
+}
+
+.handleTop {
+  top: -4px;
+}
+
+.handleBottom {
+  bottom: -4px;
+}
+
+.handle::after {
+  content: '';
+  position: absolute;
+  background: var(--cs-accent);
+  opacity: 0;
+  transition: opacity var(--cs-duration) var(--cs-ease);
+  border-radius: 2px;
+}
+
+.handleLeft::after,
+.handleRight::after {
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+}
+
+.handleTop::after,
+.handleBottom::after {
+  left: 0;
+  right: 0;
+  top: 3px;
+  height: 2px;
+}
+
+.handle:hover::after,
+.handleActive::after {
+  opacity: 1;
+}
+
+.handle:focus-visible {
+  box-shadow: none;
+}
+
+.handle:focus-visible::after {
+  opacity: 1;
+}
+
+/* ---- Tree ---- */
+.tree {
+  position: relative;
+  height: 100%;
+  overflow: auto;
+  outline: none;
+  user-select: none;
+}
+
+.treeInner {
+  position: relative;
+  width: 100%;
+}
+
+.treeRow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 6px;
+  border-radius: 8px;
+  color: var(--cs-text);
+  font-size: var(--cs-text-sm);
+  cursor: default;
+  white-space: nowrap;
+  transition: background-color 60ms var(--cs-ease);
+}
+
+.treeRow:hover {
+  background: var(--cs-surface-2);
+}
+
+.treeRowSelected,
+.treeRowSelected:hover {
+  background: var(--cs-accent-soft);
+  color: var(--cs-text);
+}
+
+.treeRowFocused {
+  box-shadow: inset 0 0 0 1px var(--cs-accent);
+}
+
+.treeRowMuted {
+  color: var(--cs-text-3);
+}
+
+.treeRowMuted .treeIcon {
+  opacity: 0.5;
+}
+
+.treeRowDragging {
+  opacity: 0.4;
+}
+
+.treeRowDropInside {
+  box-shadow: inset 0 0 0 1.5px var(--cs-accent);
+  background: var(--cs-accent-soft);
+}
+
+.treeToggle {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  color: var(--cs-text-3);
+  flex: none;
+}
+
+.treeToggle svg {
+  width: 12px;
+  height: 12px;
+  transition: transform var(--cs-duration) var(--cs-ease);
+}
+
+.treeToggleOpen svg {
+  transform: rotate(90deg);
+}
+
+.treeToggle:hover {
+  color: var(--cs-text);
+  background: var(--cs-surface-3);
+}
+
+.treeIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  color: var(--cs-text-2);
+  flex: none;
+}
+
+.treeIcon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.treeLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.treeInput {
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px solid var(--cs-accent);
+  background: var(--cs-surface);
+  color: var(--cs-text);
+  font: inherit;
+  outline: none;
+}
+
+.treeTrailing {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  opacity: 0;
+  transition: opacity var(--cs-duration) var(--cs-ease);
+}
+
+.treeRow:hover .treeTrailing,
+.treeTrailingAlways,
+.treeRow:focus-within .treeTrailing {
+  opacity: 1;
+}
+
+.treeDropLine {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--cs-accent);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.treeDropLine::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cs-accent);
+}
+
+.treeGuide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--cs-border);
+  pointer-events: none;
+}
+
+/* ---- Table ---- */
+.tableWrap {
+  overflow: auto;
+  border: 1px solid var(--cs-border);
+  border-radius: var(--cs-radius-md);
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--cs-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 7px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--cs-border);
+  white-space: nowrap;
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--cs-surface);
+  color: var(--cs-text-2);
+  font-size: var(--cs-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover td {
+  background: var(--cs-surface-2);
+}
+
+.tableRowSelected td,
+.tableRowSelected:hover td {
+  background: var(--cs-accent-soft) !important;
+}
+
+.tableRowClickable {
+  cursor: pointer;
+}
+
+.alignRight {
+  text-align: right !important;
+}
+
+.alignCenter {
+  text-align: center !important;
+}
+
+.sortBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+
+.sortBtn svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.5;
+}
+
+.sortActive svg {
+  opacity: 1;
+  color: var(--cs-accent-2);
+}
+
+.tableFoot td {
+  font-weight: 600;
+  background: var(--cs-surface);
+  border-top: 1px solid var(--cs-border-strong);
+}
+
+.tableDense th,
+.tableDense td {
+  padding: 4px 8px;
+}
+
+.tableEmpty {
+  padding: 24px;
+  text-align: center;
+  color: var(--cs-text-3);
+}

@@ -1,0 +1,112 @@
+/* CadSandbox design tokens. Theme = [data-theme] on <html> ("dark" default, "light").
+   Owned by the UI kit; every component and the render overlays read ONLY these variables. */
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --cs-bg: #0b0b0d;
+  --cs-bg-elevated: #121215;
+  --cs-surface: #19191d;
+  --cs-surface-2: #222227;
+  --cs-surface-3: #2c2c33;
+  --cs-glass: rgba(28, 28, 33, 0.72);
+  --cs-glass-strong: rgba(22, 22, 26, 0.9);
+  --cs-border: rgba(255, 255, 255, 0.08);
+  --cs-border-strong: rgba(255, 255, 255, 0.16);
+  --cs-text: #f4f4f6;
+  --cs-text-2: #b3b3bb;
+  --cs-text-3: #7c7c86;
+  --cs-accent: #7c5cff;
+  --cs-accent-2: #a18bff;
+  --cs-accent-contrast: #ffffff;
+  --cs-accent-soft: rgba(124, 92, 255, 0.16);
+  --cs-danger: #ff4d5e;
+  --cs-warning: #ffb020;
+  --cs-success: #2fd67b;
+  --cs-info: #3fb6ff;
+  --cs-focus: #a18bff;
+  --cs-selection: #7c5cff;
+  --cs-viewport-bg: #0e0e11;
+  --cs-grid-minor: rgba(255, 255, 255, 0.045);
+  --cs-grid-major: rgba(255, 255, 255, 0.09);
+  --cs-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --cs-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --cs-shadow-3: 0 24px 64px rgba(0, 0, 0, 0.55);
+  --cs-glass-highlight: rgba(255, 255, 255, 0.07);
+  --cs-glass-border: rgba(255, 255, 255, 0.1);
+  --cs-scrim: rgba(0, 0, 0, 0.55);
+  --cs-on-inverse: #0b0b0d;
+  --cs-inverse: #f4f4f6;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --cs-bg: #f3f3f5;
+  --cs-bg-elevated: #fafafb;
+  --cs-surface: #ffffff;
+  --cs-surface-2: #f1f1f4;
+  --cs-surface-3: #e6e6eb;
+  --cs-glass: rgba(255, 255, 255, 0.74);
+  --cs-glass-strong: rgba(255, 255, 255, 0.92);
+  --cs-border: rgba(10, 10, 20, 0.08);
+  --cs-border-strong: rgba(10, 10, 20, 0.16);
+  --cs-text: #111116;
+  --cs-text-2: #4b4b55;
+  --cs-text-3: #8a8a94;
+  --cs-accent: #6a47ff;
+  --cs-accent-2: #8a70ff;
+  --cs-accent-contrast: #ffffff;
+  --cs-accent-soft: rgba(106, 71, 255, 0.12);
+  --cs-danger: #e5364a;
+  --cs-warning: #d98a00;
+  --cs-success: #16a35a;
+  --cs-info: #0a8fd6;
+  --cs-focus: #6a47ff;
+  --cs-selection: #6a47ff;
+  --cs-viewport-bg: #e9e9ee;
+  --cs-grid-minor: rgba(0, 0, 0, 0.05);
+  --cs-grid-major: rgba(0, 0, 0, 0.1);
+  --cs-shadow-1: 0 1px 2px rgba(16, 16, 32, 0.08);
+  --cs-shadow-2: 0 8px 24px rgba(16, 16, 32, 0.1);
+  --cs-shadow-3: 0 24px 64px rgba(16, 16, 32, 0.14);
+  --cs-glass-highlight: rgba(255, 255, 255, 0.9);
+  --cs-glass-border: rgba(10, 10, 20, 0.1);
+  --cs-scrim: rgba(20, 20, 30, 0.35);
+  --cs-on-inverse: #ffffff;
+  --cs-inverse: #16161b;
+}
+
+:root {
+  --cs-font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --cs-font-display: 'Geist Variable', 'Inter Variable', system-ui, sans-serif;
+  --cs-font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+  --cs-radius-xs: 6px;
+  --cs-radius-sm: 10px;
+  --cs-radius-md: 14px;
+  --cs-radius-lg: 20px;
+  --cs-radius-xl: 28px;
+  --cs-radius-pill: 999px;
+  --cs-blur: 20px;
+  --cs-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --cs-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --cs-duration: 160ms;
+  --cs-duration-slow: 260ms;
+  --cs-text-xs: 11px;
+  --cs-text-sm: 12px;
+  --cs-text-md: 13px;
+  --cs-text-lg: 15px;
+  --cs-text-xl: 18px;
+  --cs-control-h: 30px;
+  --cs-control-h-sm: 26px;
+  --cs-control-h-lg: 38px;
+  --cs-tool-icon: 22px;
+  --cs-tool-w: 56px;
+  --cs-tool-h: 52px;
+  --cs-panel-w: 300px;
+  --cs-rail-w: 44px;
+  --cs-focus-ring: 0 0 0 2px var(--cs-bg), 0 0 0 4px var(--cs-focus);
+  --cs-z-panel: 10;
+  --cs-z-toolbar: 20;
+  --cs-z-popover: 90; /* above dialogs: selects, menus and popovers open from inside dialogs */
+  --cs-z-dialog: 80;
+  --cs-z-toast: 100;
+}

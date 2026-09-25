@@ -1,0 +1,61 @@
+.pin {
+  position: absolute;
+  z-index: 3;
+  transform: translate(-50%, -100%);
+  display: inline-grid;
+  place-items: center;
+  padding: 3px;
+  border-radius: 14px 14px 14px 3px;
+  background: var(--cs-glass-strong);
+  border: 1px solid var(--cs-glass-border);
+  box-shadow: var(--cs-shadow-2);
+  transition: transform var(--cs-duration) var(--cs-spring);
+}
+
+.pin:hover {
+  transform: translate(-50%, -100%) scale(1.08);
+}
+
+.pinActive {
+  box-shadow:
+    0 0 0 2px var(--cs-accent),
+    var(--cs-shadow-2);
+}
+
+.pinCount {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--cs-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+}
+
+.composerAnchor {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+}
+
+.composerHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--cs-text-sm);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.composerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}

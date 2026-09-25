@@ -1,0 +1,182 @@
+.button {
+  --btn-h: var(--cs-control-h);
+  --btn-px: 12px;
+  --btn-fs: var(--cs-text-sm);
+  --btn-icon: 16px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: var(--btn-h);
+  padding: 0 var(--btn-px);
+  border-radius: var(--cs-radius-pill);
+  font-size: var(--btn-fs);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--cs-text);
+  background: var(--cs-surface-2);
+  border: 1px solid transparent;
+  transition:
+    background-color var(--cs-duration) var(--cs-ease),
+    color var(--cs-duration) var(--cs-ease),
+    border-color var(--cs-duration) var(--cs-ease),
+    transform var(--cs-duration) var(--cs-spring),
+    box-shadow var(--cs-duration) var(--cs-ease),
+    opacity var(--cs-duration) var(--cs-ease);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.965);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.button:focus-visible {
+  box-shadow: var(--cs-focus-ring);
+  border-radius: var(--cs-radius-pill);
+}
+
+.button svg {
+  width: var(--btn-icon);
+  height: var(--btn-icon);
+  flex: none;
+}
+
+.sm {
+  --btn-h: var(--cs-control-h-sm);
+  --btn-px: 10px;
+  --btn-fs: var(--cs-text-xs);
+  --btn-icon: 14px;
+}
+
+.lg {
+  --btn-h: var(--cs-control-h-lg);
+  --btn-px: 18px;
+  --btn-fs: var(--cs-text-md);
+  --btn-icon: 18px;
+}
+
+.square {
+  padding: 0;
+  width: var(--btn-h);
+  border-radius: var(--cs-radius-sm);
+}
+
+.round {
+  padding: 0;
+  width: var(--btn-h);
+  border-radius: var(--cs-radius-pill);
+}
+
+/* Variants */
+.primary {
+  background: var(--cs-accent);
+  color: var(--cs-accent-contrast);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--cs-accent-2);
+}
+
+.secondary {
+  background: var(--cs-surface-2);
+  border-color: var(--cs-border);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--cs-surface-3);
+  border-color: var(--cs-border-strong);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--cs-text-2);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--cs-surface-2);
+  color: var(--cs-text);
+}
+
+.danger {
+  background: transparent;
+  color: var(--cs-danger);
+  border-color: color-mix(in srgb, var(--cs-danger) 35%, transparent);
+}
+
+.danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cs-danger) 14%, transparent);
+}
+
+.dangerSolid {
+  background: var(--cs-danger);
+  color: #fff;
+}
+
+.dangerSolid:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.glass {
+  background: var(--cs-glass);
+  -webkit-backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  backdrop-filter: blur(var(--cs-blur)) saturate(1.5);
+  border-color: var(--cs-glass-border);
+  box-shadow:
+    var(--cs-shadow-2),
+    inset 0 1px 0 var(--cs-glass-highlight);
+}
+
+.glass:hover:not(:disabled) {
+  background: var(--cs-glass-strong);
+}
+
+.inverse {
+  background: var(--cs-inverse);
+  color: var(--cs-on-inverse);
+}
+
+.inverse:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+
+.active {
+  background: var(--cs-inverse) !important;
+  color: var(--cs-on-inverse) !important;
+  border-color: transparent !important;
+}
+
+.activeSoft {
+  background: var(--cs-accent-soft) !important;
+  color: var(--cs-accent-2) !important;
+}
+
+.loading {
+  color: transparent !important;
+}
+
+.spinner {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--cs-text);
+}
+
+.primary .spinner {
+  color: var(--cs-accent-contrast);
+}
+
+.label {
+  display: inline-block;
+}

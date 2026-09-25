@@ -83,8 +83,11 @@ export interface Bounds3 {
 export interface GeometryResult {
   /** 3D surfaces (may be empty for pure 2D entities). */
   parts: MeshPart[]
-  /** Feature edges for outline/wireframe/hidden-line rendering: segment pairs [x,y,z, x,y,z, …]. */
+  /** Feature edges (creases ≥ ~30°) for outline/hidden-line/technical rendering: segment pairs [x,y,z, x,y,z, …]. */
   edges?: Float32Array
+  /** Blender-like wireframe: the facet topology (rings, segments, every face boundary) without the
+   *  triangle diagonals of flat faces — drawn by the wireframe render mode. Segment pairs, node-local. */
+  wire?: Float32Array
   /** 2D content drawn in the node's local XY plane in EVERY view (drafting entities, dimensions). */
   drawing?: Drawing2D
   /** Symbolic plan representation (architecture): shown in plan/technical views instead of the
@@ -140,10 +143,22 @@ export interface GeometryService {
   /** World-space bounds of nodes (union), using evaluated results. */
   worldBounds(nodeIds: Iterable<string>): Bounds3 | null
   readonly stats: { pending: number; evaluated: number; cacheSize: number; lastEvalMs: number }
+  /** Evaluated definition nodes of a component (renderer instances them per `instance` node). */
+  getComponentGeometry(componentId: string): ComponentGeometry[]
+  /** Content key of a node's current result (changes whenever its geometry changes). */
+  keyOf(nodeId: string): string | undefined
   dispose(): void
 }
 
 export type CreateGeometryService = (opts: GeometryServiceOptions) => GeometryService
+
+/** One evaluated node of a component definition, for GPU instancing. */
+export interface ComponentGeometry {
+  nodeId: string
+  result: GeometryResult
+  /** node-local → definition-root space, column-major 4×4 */
+  matrix: Float64Array
+}
 
 // ------------------------------------------------------------------ analysis (architecture)
 export interface RoomRow {
@@ -174,8 +189,13 @@ export interface WallRow {
   length: number
   height: number
   thickness: number
+  /** One reference face: length × height */
   grossArea: number
+  openingArea?: number
+  /** grossArea − openingArea (one face) */
   netArea: number
+  /** Both faces, net */
+  surfaceArea?: number
   volume: number
   material: string
 }

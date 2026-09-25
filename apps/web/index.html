@@ -1,14 +1,24 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="color-scheme" content="dark light" />
-    <meta name="theme-color" content="#0b0b0d" />
+    <meta name="theme-color" content="#0b0b0d" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f3f3f5" media="(prefers-color-scheme: light)" />
     <meta name="description" content="CadSandbox — design, draft and build together, right in your browser." />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="application-name" content="CadSandbox" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="CadSandbox" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="mask-icon" href="/icon-mono.svg" color="#7c5cff" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
     <title>CadSandbox</title>
   </head>
   <body>
+    <noscript>CadSandbox needs JavaScript. / CadSandbox benötigt JavaScript.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

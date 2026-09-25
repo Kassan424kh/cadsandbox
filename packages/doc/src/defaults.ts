@@ -4,7 +4,9 @@ import type {
   DocMeta,
   FurnitureKind,
   LayerDef,
+  MaterialCategory,
   MaterialDef,
+  MaterialThermal,
   NodeParamsMap,
   NodeType,
   OpeningParams,
@@ -101,6 +103,10 @@ export const DEFAULT_PARAMS: { [K in NodeType]: NodeParamsMap[K] } = {
   hatch: { boundary: [], pattern: 'ansi31', scale: 1, angle: 0 },
   dimension: { kind: 'aligned', points: [[0, 0, 0], [1, 0, 0]], offset: 0.5, axis: 'auto' },
   leader: { points: [[0, 0], [0.6, 0.4]], text: 'Note' },
+  gridline: { a: [0, 0], b: [0, 10], label: 'A', bubble: 'start' },
+  levelmark: { variant: 'plan' },
+  northarrow: { size: 1.2, style: 'compass', angle: 0 },
+  scalebar: { scale: 100, length: 5, segments: 5 },
   wall: { a: [0, 0], b: [4, 0], thickness: 0.24, height: 2.75, baseOffset: 0, justification: 'center', exterior: false, structural: true },
   opening: {
     kind: 'door',
@@ -253,6 +259,71 @@ export function defaultLayers(): LayerDef[] {
   ]
 }
 
+// ------------------------------------------------------------------ Building physics (U-value estimates)
+/** Design values of the built-in materials (λ W/(m·K), ρ kg/m³, μ dry) after DIN 4108-4 and
+ *  DIN EN ISO 10456; keyed by built-in id without the `mat-` prefix. Vapour-tight materials omit μ. */
+export const BUILTIN_THERMAL: Readonly<Record<string, MaterialThermal>> = {
+  default: { lambda: 1.0, density: 2000, mu: 20 },
+  'white-matte': { lambda: 0.2, density: 1200, mu: 500 }, // paint / coating
+  'black-matte': { lambda: 0.2, density: 1200, mu: 500 },
+  clay: { lambda: 0.8, density: 1700, mu: 10 }, // clay (Lehm) plaster / rammed earth
+  'plastic-glossy': { lambda: 0.17, density: 1390, mu: 50000 }, // PVC-U
+  'plastic-soft': { lambda: 0.33, density: 920, mu: 100000 }, // PE-LD
+  rubber: { lambda: 0.17, density: 1200, mu: 10000 },
+  plaster: { lambda: 0.7, density: 1400, mu: 10 }, // lime-gypsum plaster
+  concrete: { lambda: 2.0, density: 2400, mu: 80 },
+  'concrete-rc': { lambda: 2.3, density: 2400, mu: 80 }, // reinforced, 1 % steel
+  screed: { lambda: 1.4, density: 2000, mu: 50 }, // cement screed
+  'brick-red': { lambda: 0.81, density: 1800, mu: 10 }, // solid clay brick
+  'brick-white': { lambda: 0.81, density: 1800, mu: 10 },
+  'masonry-ks': { lambda: 0.99, density: 1800, mu: 15 }, // sand-lime brick KS 1.8
+  insulation: { lambda: 0.035, density: 30, mu: 1 }, // mineral wool WLS 035
+  oak: { lambda: 0.18, density: 700, mu: 50 },
+  walnut: { lambda: 0.18, density: 650, mu: 50 },
+  'parquet-oak': { lambda: 0.18, density: 700, mu: 50 },
+  timber: { lambda: 0.13, density: 500, mu: 20 }, // softwood C24
+  marble: { lambda: 3.5, density: 2800, mu: 10000 },
+  granite: { lambda: 2.8, density: 2700, mu: 10000 },
+  stone: { lambda: 2.3, density: 2600, mu: 40 }, // sandstone / limestone
+  'tiles-white': { lambda: 1.3, density: 2300, mu: 200 },
+  'tiles-terracotta': { lambda: 1.0, density: 2000, mu: 30 },
+  glass: { lambda: 1.0, density: 2500 },
+  'glass-frosted': { lambda: 1.0, density: 2500 },
+  'glass-tinted': { lambda: 1.0, density: 2500 },
+  chrome: { lambda: 50, density: 7800 },
+  'steel-brushed': { lambda: 17, density: 7900 }, // stainless steel
+  aluminium: { lambda: 160, density: 2800 },
+  'steel-dark': { lambda: 50, density: 7800 },
+  gold: { lambda: 310, density: 19300 },
+  copper: { lambda: 380, density: 8900 },
+  'fabric-grey': { lambda: 0.06, density: 200, mu: 5 }, // textile covering
+  'fabric-beige': { lambda: 0.06, density: 200, mu: 5 },
+  leather: { lambda: 0.15, density: 1000 },
+  grass: { lambda: 1.5, density: 1500, mu: 50 }, // topsoil (clay/silt)
+  gravel: { lambda: 2.0, density: 1800, mu: 50 },
+  earth: { lambda: 1.5, density: 1500, mu: 50 },
+  water: { lambda: 0.6, density: 1000 },
+  'emissive-white': { lambda: 0.19, density: 1180, mu: 10000 }, // PMMA diffuser
+}
+
+/** Fallback design values per material category (materials without `thermal`). */
+export const CATEGORY_THERMAL: Readonly<Record<MaterialCategory, MaterialThermal>> = {
+  generic: { lambda: 1.0, density: 2000 },
+  paint: { lambda: 0.2, density: 1200 },
+  plastic: { lambda: 0.2, density: 1200 },
+  wood: { lambda: 0.13, density: 500 },
+  stone: { lambda: 2.3, density: 2600 },
+  concrete: { lambda: 2.0, density: 2400 },
+  brick: { lambda: 0.81, density: 1800 },
+  metal: { lambda: 50, density: 7800 },
+  glass: { lambda: 1.0, density: 2500 },
+  fabric: { lambda: 0.06, density: 200 },
+  ceramic: { lambda: 1.3, density: 2300 },
+  ground: { lambda: 1.5, density: 1500 },
+  light: { lambda: 0.19, density: 1180 },
+  custom: { lambda: 1.0, density: 2000 },
+}
+
 // ------------------------------------------------------------------ Built-in material library
 // Procedural textures are generated at runtime by @cadsandbox/render (no downloads, tiny bundle).
 const m = (id: string, name: string, category: MaterialDef['category'], color: string, extra: Partial<MaterialDef> = {}): MaterialDef => ({
@@ -266,6 +337,7 @@ const m = (id: string, name: string, category: MaterialDef['category'], color: s
   transmission: 0,
   ior: 1.5,
   builtin: true,
+  thermal: { ...(BUILTIN_THERMAL[id] ?? CATEGORY_THERMAL[category]) },
   ...extra,
 })
 

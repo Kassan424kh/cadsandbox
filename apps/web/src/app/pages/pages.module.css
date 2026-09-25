@@ -1,0 +1,256 @@
+/* Generic page layouts: support, org, collections details, admin tickets. */
+
+.page {
+  display: grid;
+  gap: 22px;
+}
+
+.muted {
+  color: var(--cs-text-2);
+  font-size: 13px;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ticketList {
+  display: grid;
+  gap: 4px;
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.ticketItem {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: var(--cs-radius-md);
+  border: 1px solid transparent;
+}
+
+.ticketItem:hover {
+  background: var(--cs-surface-2);
+}
+
+.ticketItem[aria-current='true'] {
+  background: var(--cs-surface);
+  border-color: var(--cs-border-strong);
+}
+
+.ticketItem strong {
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ticketItem span {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--cs-text-3);
+}
+
+.detail {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: var(--cs-radius-lg);
+  border: 1px solid var(--cs-border);
+  background: var(--cs-surface);
+}
+
+.detailHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.detailHead h2 {
+  font-size: 18px;
+}
+
+.thread {
+  display: grid;
+  gap: 10px;
+}
+
+.message {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: var(--cs-radius-md);
+  background: var(--cs-surface-2);
+  max-width: 88%;
+}
+
+.staffMessage {
+  justify-self: end;
+  background: var(--cs-accent-soft);
+}
+
+.message header {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 12px;
+  color: var(--cs-text-3);
+}
+
+.message header strong {
+  color: var(--cs-text);
+  font-size: 12.5px;
+}
+
+.message p {
+  white-space: pre-wrap;
+  font-size: 13.5px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.replyForm {
+  display: grid;
+  gap: 8px;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--cs-radius-md);
+  border: 1px solid var(--cs-border);
+  background: var(--cs-bg-elevated);
+  font-size: 13px;
+  color: var(--cs-text-2);
+}
+
+.notice p {
+  flex: 1;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.stat {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border-radius: var(--cs-radius-lg);
+  border: 1px solid var(--cs-border);
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--cs-accent) 8%, transparent), transparent 60%),
+    var(--cs-surface);
+}
+
+.stat span {
+  font-size: 12px;
+  color: var(--cs-text-3);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.stat strong {
+  font-family: var(--cs-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border-radius: var(--cs-radius-lg);
+  border: 1px solid var(--cs-border);
+  background: var(--cs-surface);
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.panelHead h2 {
+  font-size: 16px;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filters > * {
+  min-width: 160px;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--cs-text-3);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 8px 16px;
+  font-size: 13px;
+}
+
+.kv dt {
+  color: var(--cs-text-3);
+}
+
+.kv dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.actionsRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mono {
+  font-family: var(--cs-font-mono);
+  font-size: 12px;
+}
+
+.rowLink {
+  color: var(--cs-text);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.rowLink:hover {
+  text-decoration: underline;
+}
