@@ -63,7 +63,10 @@ export function sanitizeText(s: string): string {
 
 let configured = false
 
-/** Configure troika once: bundled font, same-origin (never reached) fallback path, worker on. */
+/** Configure troika once: bundled font, same-origin (never reached) fallback path, NO worker —
+ *  troika builds its worker from stringified functions (eval), which our strict production CSP
+ *  (script-src without 'unsafe-eval') correctly blocks. Glyph SDFs are cached, so main-thread
+ *  generation only costs on first use of a glyph. */
 export function ensureTextConfigured(): void {
   if (configured) return
   configured = true
@@ -73,6 +76,7 @@ export function ensureTextConfigured(): void {
     unicodeFontsURL: new URL('cs-fonts-unavailable', typeof location !== 'undefined' ? location.href : 'http://localhost/').toString(),
     sdfGlyphSize: 64,
     textureWidth: 2048,
+    useWorker: false,
   })
   try {
     preloadFont({ font: FONT_URL, characters: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,;:-+=/()° m²³' }, () => {})
