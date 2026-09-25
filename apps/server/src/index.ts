@@ -49,7 +49,13 @@ async function main() {
     deps.log.info({ signal }, 'shutting down')
     const force = setTimeout(() => process.exit(1), 15_000)
     force.unref()
+    // Zero-downtime replacement: stop accepting connections and drop idle keep-alive sockets at once,
+    // so the proxy's next request fails fast and is retried on the other container instead of
+    // hanging here. In-flight requests get a short grace period while the database is still open.
     server.close()
+    server.closeIdleConnections()
+    await new Promise((r) => setTimeout(r, 1500))
+    server.closeAllConnections()
     await scheduler.stop()
     await runtime.close()
     process.exit(0)
