@@ -142,7 +142,9 @@ export function EditorPage({ session, fileId: fileIdProp, onOpenFile, onExit, on
     if (status.kind === 'ready') status.ctx.editor.setNavigation({ viewOnly: phone })
   }, [phone, status])
 
-  const ctx = status.kind === 'ready' ? status.ctx : null
+  // Phones are view-only: the whole chrome behaves like a read-only session (no editing UI at all);
+  // the engine side is handled by navigation.viewOnly above.
+  const ctx = useMemo(() => (status.kind === 'ready' ? (phone && !status.ctx.readOnly ? { ...status.ctx, readOnly: true } : status.ctx) : null), [status, phone])
   return (
     <TooltipProvider>
       <EditorContext.Provider value={ctx}>

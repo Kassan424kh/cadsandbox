@@ -112,6 +112,8 @@ export function TopLeft() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" sideOffset={10}>
+            {!readOnly && (
+              <>
             <DropdownMenuItem icon={<PenLine />} disabled={readOnly} onSelect={() => setEditing(true)}>
               {t('menu.project.rename', 'Rename')}
             </DropdownMenuItem>
@@ -136,6 +138,8 @@ export function TopLeft() {
             >
               {t('menu.project.newDesign', 'New design')}
             </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuSub>
               <DropdownMenuSubTrigger icon={<Files />}>{t('menu.project.switchFile', 'Switch file')}</DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
@@ -147,7 +151,9 @@ export function TopLeft() {
                 {designs.length === 0 && <DropdownMenuItem disabled>{t('menu.project.noFiles', 'No other designs')}</DropdownMenuItem>}
               </DropdownMenuSubContent>
             </DropdownMenuSub>
-            <DropdownMenuSeparator />
+            {!readOnly && <DropdownMenuSeparator />}
+            {!readOnly && (
+            <>
             <DropdownMenuItem icon={<Clock />} onSelect={() => ui.openDialog('versions')}>
               {t('menu.project.versions', 'Version history')}
             </DropdownMenuItem>
@@ -160,6 +166,8 @@ export function TopLeft() {
             >
               {t('menu.project.settings', 'Document settings')}
             </DropdownMenuItem>
+            </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuLabel>{t('menu.project.theme', 'Theme')}</DropdownMenuLabel>
             <DropdownMenuRadioGroup value={theme} onValueChange={(v) => setTheme(v as 'dark' | 'light' | 'system')}>
@@ -174,9 +182,11 @@ export function TopLeft() {
               </DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
             <DropdownMenuSeparator />
+            {!readOnly && (
             <DropdownMenuItem icon={<Keyboard />} shortcut="?" onSelect={() => ui.openDialog('shortcuts')}>
               {t('menu.project.shortcuts', 'Keyboard shortcuts')}
             </DropdownMenuItem>
+            )}
             <DropdownMenuItem icon={<CircleQuestionMark />} onSelect={() => ui.openDialog('support')}>
               {t('menu.project.help', 'Get help')}
             </DropdownMenuItem>
