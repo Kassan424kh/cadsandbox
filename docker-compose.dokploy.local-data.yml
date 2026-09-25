@@ -69,6 +69,58 @@ services:
       traefik.http.routers.cadsandbox-http.service: cadsandbox
       traefik.http.services.cadsandbox.loadbalancer.server.port: '8787'
 
+  # ── One-off, only with --profile move: copy the data from the bundled "db" service and the local
+  #    file volume to DATABASE_URL and the S3_* storage (same procedure as Bylbox). Stop "app" first.
+  move-db:
+    image: postgres:17-alpine
+    profiles: [move]
+    environment:
+      FROM_URL: postgres://cadsandbox:${POSTGRES_PASSWORD}@db:5432/cadsandbox
+      TO_URL: ${DATABASE_URL:-}
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        tables=$$(psql "$$TO_URL" -Atc "select count(*) from information_schema.tables where table_schema not in ('pg_catalog', 'information_schema')")
+        if [ "$$tables" != 0 ]; then echo "target database already has $$tables tables - not touching it"; exit 1; fi
+        pg_dump -Fc --no-owner --no-acl -f /tmp/cadsandbox.dump "$$FROM_URL"
+        pg_restore --no-owner --no-acl --exit-on-error --single-transaction -d "$$TO_URL" /tmp/cadsandbox.dump
+        psql "$$TO_URL" -q -c "create table _move_check (name text primary key, source bigint, target bigint)"
+        for t in $$(psql "$$FROM_URL" -Atc "select schemaname || '.' || tablename from pg_tables where schemaname in ('public', 'drizzle') order by 1"); do
+          a=$$(psql "$$FROM_URL" -Atc "select count(*) from $$t")
+          b=$$(psql "$$TO_URL" -Atc "select count(*) from $$t")
+          psql "$$TO_URL" -q -c "insert into _move_check values ('$$t', $$a, $$b)"
+          echo "$$t: $$a -> $$b"
+          [ "$$a" = "$$b" ]
+        done
+        echo "database copied"
+    networks: [internal, proxy]
+
+  move-files:
+    image: amazon/aws-cli:2.37.3
+    profiles: [move]
+    environment:
+      AWS_DEFAULT_REGION: ${S3_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+      TO_ENDPOINT: ${S3_ENDPOINT:-}
+      TO_BUCKET: ${S3_BUCKET:-cadsandbox}
+      TO_PREFIX: ${S3_PREFIX:-blobs/}
+    volumes:
+      - appdata:/olddata:ro
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        copied=$$(find /olddata/blobs -type f 2>/dev/null | wc -l)
+        if [ "$$copied" -gt 0 ]; then
+          aws s3 sync /olddata/blobs "s3://$$TO_BUCKET/$$TO_PREFIX" --endpoint-url "$$TO_ENDPOINT" --only-show-errors
+        fi
+        there=$$(aws s3 ls "s3://$$TO_BUCKET/$$TO_PREFIX" --recursive --endpoint-url "$$TO_ENDPOINT" | wc -l)
+        echo "files copied: $$copied, now in the target bucket: $$there"
+        [ "$$there" -ge "$$copied" ]
+    networks: [proxy]
+
 networks:
   internal:
     internal: true
