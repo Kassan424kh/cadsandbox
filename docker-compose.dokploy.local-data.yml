@@ -1,0 +1,81 @@
+# TRANSITIONAL layout (built-in Postgres + local file volume) used until the data has moved to the
+# external PostgreSQL + S3 layout in docker-compose.dokploy.yml. Delete after the migration.
+# CadSandbox on Dokploy (Traefik in front). Dokploy writes the Environment tab into `.env` next to
+# this file; required there: APP_DOMAIN, PUBLIC_URL, BETTER_AUTH_SECRET, POSTGRES_PASSWORD,
+# STORAGE_ENCRYPTION_KEY (see apps/server/.env.example for everything else).
+#
+# The route is defined by Traefik labels (HTTPS via Dokploy's `letsencrypt` resolver), so leave
+# Dokploy's Domains tab empty. ONE app instance on purpose: live collaboration (Hocuspocus) keeps
+# documents in memory, so two instances behind one route would split editors between them.
+# The standalone self-hosting setup (Caddy on 80/443) stays in docker-compose.yml.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '5'
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cadsandbox
+      POSTGRES_USER: cadsandbox
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: --data-checksums
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U cadsandbox -d cadsandbox']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://cadsandbox:${POSTGRES_PASSWORD}@db:5432/cadsandbox
+      DATA_DIR: /data
+      TRUST_PROXY: 'true'
+      TRUSTED_PROXIES: 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - appdata:/data
+    networks: [internal, proxy]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: ${PROXY_NETWORK:-dokploy-network}
+      traefik.http.routers.cadsandbox.rule: Host(`${APP_DOMAIN:?set APP_DOMAIN}`)
+      traefik.http.routers.cadsandbox.entrypoints: websecure
+      traefik.http.routers.cadsandbox.tls.certresolver: ${CERT_RESOLVER:-letsencrypt}
+      traefik.http.routers.cadsandbox.service: cadsandbox
+      traefik.http.routers.cadsandbox-http.rule: Host(`${APP_DOMAIN:?set APP_DOMAIN}`)
+      traefik.http.routers.cadsandbox-http.entrypoints: web
+      traefik.http.routers.cadsandbox-http.middlewares: redirect-to-https@file
+      traefik.http.routers.cadsandbox-http.service: cadsandbox
+      traefik.http.services.cadsandbox.loadbalancer.server.port: '8787'
+
+networks:
+  internal:
+    internal: true
+  proxy:
+    name: ${PROXY_NETWORK:-dokploy-network}
+    external: true
+
+volumes:
+  pgdata: {}
+  appdata: {}
