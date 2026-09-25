@@ -5,6 +5,7 @@ import { createRuntime } from './bootstrap'
 import { loadConfig } from './env'
 import { createApp } from './http/app'
 import { startScheduler } from './jobs/scheduler'
+import { lifecycle } from './lifecycle'
 
 process.env.BETTER_AUTH_TELEMETRY = '0'
 
@@ -47,11 +48,14 @@ async function main() {
     if (stopping) return
     stopping = true
     deps.log.info({ signal }, 'shutting down')
-    const force = setTimeout(() => process.exit(1), 15_000)
+    const force = setTimeout(() => process.exit(1), 18_000)
     force.unref()
-    // Zero-downtime replacement: stop accepting connections and drop idle keep-alive sockets at once,
-    // so the proxy's next request fails fast and is retried on the other container instead of
-    // hanging here. In-flight requests get a short grace period while the database is still open.
+    // Zero-downtime replacement, step 1: report unhealthy but keep serving, so Traefik's active health
+    // check (1 s interval) takes this instance out of rotation while it is still reachable.
+    lifecycle.draining = true
+    await new Promise((r) => setTimeout(r, Number(process.env.SHUTDOWN_DRAIN_MS ?? 4000)))
+    // Step 2: stop accepting connections and drop idle keep-alive sockets; in-flight requests get a
+    // short grace period while the database is still open.
     server.close()
     server.closeIdleConnections()
     await new Promise((r) => setTimeout(r, 1500))

@@ -5,6 +5,7 @@ import { BRAND, LIMITS, type AnnouncementDTO, type PublicConfigDTO } from '@cads
 import { announcements } from '../db/schema'
 import type { AppEnv } from '../http/context'
 import { register } from '../http/router'
+import { lifecycle } from '../lifecycle'
 
 export const announcementDTO = (a: typeof announcements.$inferSelect): AnnouncementDTO => ({
   id: a.id,
@@ -17,6 +18,10 @@ export const announcementDTO = (a: typeof announcements.$inferSelect): Announcem
 export function publicRoutes(app: Hono<AppEnv>): void {
   register(app, 'health', async (c) => {
     const d = c.get('deps')
+    if (lifecycle.draining) {
+      c.header('Cache-Control', 'no-store')
+      return c.json({ ok: false, version: d.config.version, draining: true }, 503)
+    }
     let db = true
     try {
       await d.db.execute(sql`SELECT 1`)

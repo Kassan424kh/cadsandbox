@@ -60,7 +60,7 @@ x-app: &app
     timeout: 4s
     retries: 3
     start_period: 60s
-  stop_grace_period: 20s
+  stop_grace_period: 25s
   logging: *logging
   labels:
     traefik.enable: 'true'
@@ -75,6 +75,10 @@ x-app: &app
     traefik.http.routers.cadsandbox-http.middlewares: redirect-to-https@file
     traefik.http.routers.cadsandbox-http.service: cadsandbox
     traefik.http.services.cadsandbox.loadbalancer.server.port: '8787'
+    # Traefik probes every container itself; a draining one (503 on shutdown) leaves rotation within ~1 s
+    traefik.http.services.cadsandbox.loadbalancer.healthcheck.path: /api/health
+    traefik.http.services.cadsandbox.loadbalancer.healthcheck.interval: 1s
+    traefik.http.services.cadsandbox.loadbalancer.healthcheck.timeout: 1s
     # a request that meets a container just as it stops is retried on the other one
     traefik.http.middlewares.cadsandbox-retry.retry.attempts: '2'
     traefik.http.middlewares.cadsandbox-retry.retry.initialinterval: 100ms
