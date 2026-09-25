@@ -53,15 +53,22 @@ address for 365 days and rate-limit requests per (hashed) IP and account. Legal 
 and Art. 32 GDPR.
 
 **h) E-mails.** Only transactional e-mails (verification, password reset, invitations, data export
-and account deletion notices) via [e-mail provider, EU]. No newsletters, no open or click tracking.
+and account deletion notices) via Google Workspace (Gmail) provided by Google Ireland Limited, Gordon House,
+Barrow Street, Dublin 4, Ireland, acting as our processor (Art. 28 GDPR). This involves your e-mail address, name
+and the message content (e.g. confirmation links). Processing by Google LLC in the USA may occur; it relies on the
+EU-US Data Privacy Framework adequacy decision (Art. 45 GDPR), under which Google LLC is certified, supplemented
+by EU Standard Contractual Clauses (Art. 46(2)(c) GDPR). Legal basis: Art. 6(1)(b) GDPR. No newsletters, no open
+or click tracking.
 
 **i) Backups.** Encrypted backups are kept for up to 6 months; deleted data disappears from
 backups when that period ends.
 
 ## 4. Recipients
 
-Hosting: [host] · object storage: [provider] · e-mail delivery: [provider] · backup storage:
-[provider]. All are processors located in the EU; no transfers to third countries. People you share
+Hosting: [host] · object storage: [provider] · e-mail delivery: Google Ireland Limited (Google Workspace, see
+3 h) · backup storage: [provider]. All are processors. Hosting and storage take place exclusively in the EU. A
+transfer to a third country (USA) can only occur for e-mail delivery via Google; it is safeguarded by the EU-US
+Data Privacy Framework adequacy decision (Art. 45 GDPR) and EU Standard Contractual Clauses (Art. 46(2)(c) GDPR). People you share
 projects with see the shared content and your name.
 
 ## 5. Cookies

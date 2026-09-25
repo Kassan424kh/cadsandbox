@@ -55,7 +55,12 @@ Administratoraktionen) mit gekürzter IP-Adresse für 365 Tage und begrenzen Anf
 (gehashter) IP-Adresse und Konto. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO sowie Art. 32 DSGVO.
 
 **h) E-Mails.** Wir senden ausschließlich transaktionale E-Mails (Bestätigung, Passwort-Reset,
-Einladungen, Hinweise zu Datenexport und Kontolöschung) über [E-Mail-Dienstleister, Sitz EU].
+Einladungen, Hinweise zu Datenexport und Kontolöschung) über Google Workspace (Gmail) der Google Ireland Limited,
+Gordon House, Barrow Street, Dublin 4, Irland, als Auftragsverarbeiter (Art. 28 DSGVO). Verarbeitet werden
+E-Mail-Adresse, Name und Nachrichteninhalt (z. B. Bestätigungslinks). Eine Verarbeitung durch die Google LLC in
+den USA ist möglich; sie stützt sich auf den Angemessenheitsbeschluss zum EU-US Data Privacy Framework
+(Art. 45 DSGVO), nach dem Google LLC zertifiziert ist, ergänzend auf EU-Standardvertragsklauseln
+(Art. 46 Abs. 2 lit. c DSGVO). Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO.
 Kein Newsletter, keine Öffnungs- oder Klickverfolgung.
 
 **i) Datensicherung.** Verschlüsselte Sicherungen werden bis zu 6 Monate aufbewahrt; gelöschte
@@ -63,9 +68,11 @@ Daten verschwinden spätestens mit Ablauf dieser Frist auch aus den Sicherungen.
 
 ## 4. Empfänger
 
-Hosting: [Hoster, Adresse] · Objektspeicher: [Anbieter] · E-Mail-Versand: [Anbieter] ·
-Backup-Speicher: [Anbieter]. Alle Dienstleister sind Auftragsverarbeiter mit Sitz und
-Rechenzentren in der EU. Eine Übermittlung in Drittländer findet nicht statt. Personen, mit denen
+Hosting: [Hoster, Adresse] · Objektspeicher: [Anbieter] · E-Mail-Versand: Google Ireland Limited
+(Google Workspace, siehe 3 h) · Backup-Speicher: [Anbieter]. Alle Dienstleister sind Auftragsverarbeiter.
+Hosting und Speicherung erfolgen ausschließlich in der EU. Eine Übermittlung in ein Drittland (USA) ist nur
+beim E-Mail-Versand über Google möglich; sie ist durch den Angemessenheitsbeschluss zum EU-US Data Privacy
+Framework (Art. 45 DSGVO) und EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO) abgesichert. Personen, mit denen
 Sie Projekte teilen, sehen die freigegebenen Inhalte und Ihren Namen.
 
 ## 5. Cookies

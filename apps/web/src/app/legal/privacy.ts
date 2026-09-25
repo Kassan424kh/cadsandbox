@@ -63,7 +63,7 @@ export const privacy: LegalSet = {
       {
         heading: '8. E-Mails',
         body: [
-          'Wir versenden ausschließlich dienstbezogene E-Mails (Bestätigung der Adresse, Passwort-Zurücksetzung, Einladungen, Sicherheitshinweise, Antworten des Supports) über [PLACEHOLDER: E-Mail-Dienstleister, Sitz in der EU] als Auftragsverarbeiter. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO. Newsletter versenden wir nur mit Ihrer Einwilligung.',
+          'Wir versenden ausschließlich dienstbezogene E-Mails (Bestätigung der Adresse, Passwort-Zurücksetzung, Einladungen, Sicherheitshinweise, Antworten des Supports) über Google Workspace (Gmail) der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland, als Auftragsverarbeiter (Art. 28 DSGVO). Dabei werden Ihre E-Mail-Adresse, Ihr Name und der Inhalt der Nachricht (z. B. Bestätigungslinks) verarbeitet. Eine Verarbeitung durch die Google LLC in den USA ist möglich; sie erfolgt auf Grundlage des Angemessenheitsbeschlusses zum EU-US Data Privacy Framework (Art. 45 DSGVO), nach dem Google LLC zertifiziert ist, ergänzend auf Grundlage der EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO). Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO. Newsletter versenden wir nur mit Ihrer Einwilligung.',
         ],
       },
       {
@@ -83,8 +83,8 @@ export const privacy: LegalSet = {
       {
         heading: '11. Empfänger und Drittlandübermittlung',
         body: [
-          'Empfänger sind ausschließlich unsere Auftragsverarbeiter für Hosting und E-Mail-Versand sowie Personen, mit denen Sie Inhalte teilen. Wir verkaufen keine Daten.',
-          'Eine Übermittlung in Drittländer außerhalb der EU/des EWR findet nicht statt. [PLACEHOLDER: bestätigen oder Garantien nach Art. 44 ff. DSGVO nennen]',
+          'Empfänger sind ausschließlich unsere Auftragsverarbeiter für Hosting und E-Mail-Versand (Google Ireland Limited, siehe Abschnitt 8) sowie Personen, mit denen Sie Inhalte teilen. Wir verkaufen keine Daten.',
+          'Hosting und Speicherung erfolgen ausschließlich in der EU/im EWR. Eine Übermittlung in ein Drittland (USA) ist nur beim E-Mail-Versand über Google möglich; sie ist durch den Angemessenheitsbeschluss zum EU-US Data Privacy Framework (Art. 45 DSGVO) sowie die EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO) abgesichert.',
         ],
       },
       {
@@ -168,7 +168,7 @@ export const privacy: LegalSet = {
       {
         heading: '8. Emails',
         body: [
-          'We only send service emails (address confirmation, password reset, invitations, security notices, support replies) through [PLACEHOLDER: email provider, EU-based] acting as our processor. Legal basis: Art. 6(1)(b) GDPR. Newsletters are sent only with your consent.',
+          'We only send service emails (address confirmation, password reset, invitations, security notices, support replies) through Google Workspace (Gmail) provided by Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Ireland, acting as our processor (Art. 28 GDPR). This involves your email address, your name and the message content (e.g. confirmation links). Processing by Google LLC in the USA may occur; it is based on the EU-US Data Privacy Framework adequacy decision (Art. 45 GDPR), under which Google LLC is certified, supplemented by the EU Standard Contractual Clauses (Art. 46(2)(c) GDPR). Legal basis: Art. 6(1)(b) GDPR. Newsletters are sent only with your consent.',
         ],
       },
       {
@@ -188,8 +188,8 @@ export const privacy: LegalSet = {
       {
         heading: '11. Recipients and international transfers',
         body: [
-          'Recipients are only our processors for hosting and email delivery and the people you share content with. We do not sell data.',
-          'No data are transferred to countries outside the EU/EEA. [PLACEHOLDER: confirm, or name safeguards under Art. 44 ff. GDPR]',
+          'Recipients are only our processors for hosting and email delivery (Google Ireland Limited, see section 8) and the people you share content with. We do not sell data.',
+          'Hosting and storage take place exclusively in the EU/EEA. A transfer to a third country (USA) can only occur for email delivery via Google; it is safeguarded by the EU-US Data Privacy Framework adequacy decision (Art. 45 GDPR) and the EU Standard Contractual Clauses (Art. 46(2)(c) GDPR).',
         ],
       },
       {
