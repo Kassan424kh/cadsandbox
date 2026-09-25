@@ -1,0 +1,33 @@
+{
+  "name": "@cadsandbox/render",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@cadsandbox/doc": "workspace:*",
+    "@cadsandbox/geometry": "workspace:*",
+    "@cadsandbox/shared": "workspace:*",
+    "camera-controls": "^3.1.2",
+    "n8ao": "^2.0.1",
+    "postprocessing": "^6.39.5",
+    "three": "^0.186.1",
+    "three-gpu-pathtracer": "^0.0.24",
+    "three-mesh-bvh": "^0.9.15",
+    "troika-three-text": "^0.52.5",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.33",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0"
+  }
+}

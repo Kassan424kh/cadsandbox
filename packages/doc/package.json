@@ -1,0 +1,22 @@
+{
+  "name": "@cadsandbox/doc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@cadsandbox/shared": "workspace:*",
+    "yjs": "^13.6.33",
+    "y-protocols": "^1.0.7",
+    "fractional-indexing": "^4.0.0",
+    "nanoid": "^6.0.1"
+  }
+}

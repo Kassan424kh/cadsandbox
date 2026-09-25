@@ -1,0 +1,27 @@
+{
+  "name": "@cadsandbox/geometry",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@cadsandbox/doc": "workspace:*",
+    "@cadsandbox/shared": "workspace:*",
+    "three": "^0.186.1",
+    "manifold-3d": "^3.5.3",
+    "clipper2-js": "^1.2.4",
+    "earcut": "^3.2.3",
+    "opentype.js": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0"
+  }
+}

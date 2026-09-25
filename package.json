@@ -1,0 +1,25 @@
+{
+  "name": "cadsandbox",
+  "private": true,
+  "version": "0.1.0",
+  "description": "CadSandbox — browser-first, local-first, collaborative CAD & architecture studio.",
+  "packageManager": "pnpm@11.5.1",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @cadsandbox/web --filter @cadsandbox/server dev",
+    "dev:web": "pnpm --filter @cadsandbox/web dev",
+    "dev:server": "pnpm --filter @cadsandbox/server dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r --no-bail typecheck",
+    "test": "pnpm -r --no-bail test"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1",
+    "vite": "^8.3.1",
+    "@types/node": "^22"
+  }
+}
