@@ -143,3 +143,15 @@ and copy the blobs back into the `appdata` volume. Blobs and Yjs documents stay 
   Redis extension) and a shared rate limiter; start with one instance.
 - **Development:** `corepack pnpm dev` (web :5173 proxies `/api` + `/collab` to :8787, PGlite, mails
   in the console). Tests: `corepack pnpm --filter @cadsandbox/server test`.
+
+## Dokploy (Traefik)
+
+`docker-compose.dokploy.yml` runs CadSandbox behind Dokploy's Traefik (no Caddy, no host ports):
+
+1. Create a **Docker Compose** service from this repository, compose path `./docker-compose.dokploy.yml`, branch `main`, auto-deploy on.
+2. **Environment** (Dokploy writes it to `.env`): `APP_DOMAIN`, `PUBLIC_URL=https://<APP_DOMAIN>`,
+   `BETTER_AUTH_SECRET`, `POSTGRES_PASSWORD` (hex, no URL-special characters), `STORAGE_ENCRYPTION_KEY`
+   (`openssl rand -base64 32`, never change it later), plus optional SMTP/`ADMIN_EMAILS`/legal URLs.
+3. Leave the **Domains** tab empty — Traefik labels define the route (HTTPS via `letsencrypt`).
+4. Point the domain's DNS A record at the server. With a dynamic IP, add the record name to the
+   `DOMAINS` list of the router's Vercel DNS updater (`<domain>*<record>+<record>`).
