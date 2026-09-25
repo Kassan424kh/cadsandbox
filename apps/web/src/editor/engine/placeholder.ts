@@ -53,7 +53,7 @@ export function defaultEditorState(opts: Pick<EditorOptions, 'theme' | 'readOnly
     viewports: defaultViewports('split'),
     activeViewport: 1,
     snapping: { ...DEFAULT_SNAPPING },
-    navigation: { trackpadGestures: false },
+    navigation: { trackpadGestures: false, viewOnly: false },
     gridVisible: doc.meta.grid.visible,
     activeLevel: doc.meta.activeLevel ?? levels[0]?.id ?? null,
     isolated: null,

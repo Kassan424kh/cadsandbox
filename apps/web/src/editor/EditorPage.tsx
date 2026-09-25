@@ -7,6 +7,7 @@ import { useT } from '../i18n'
 import type { DesignHandle, LibraryStore, ProjectSession } from '../data/types'
 import { usePrefs } from '../data/prefs'
 import { Button, EmptyState, Spinner, Toaster, TooltipProvider, useTheme } from '../ui'
+import { usePhone } from './shell/hooks'
 import styles from './editor.module.css'
 import { EditorContext, type EditorContextValue } from './EditorContext'
 import { createEngine } from './engine/createEngine'
@@ -134,6 +135,12 @@ export function EditorPage({ session, fileId: fileIdProp, onOpenFile, onExit, on
   useEffect(() => {
     if (status.kind === 'ready') status.ctx.editor.setNavigation({ trackpadGestures: prefs.trackpadGestures })
   }, [prefs.trackpadGestures, status])
+
+  // Phones are viewers: every touch moves the camera (orbit / pan / pinch) — no marquee or picking.
+  const phone = usePhone()
+  useEffect(() => {
+    if (status.kind === 'ready') status.ctx.editor.setNavigation({ viewOnly: phone })
+  }, [phone, status])
 
   const ctx = status.kind === 'ready' ? status.ctx : null
   return (

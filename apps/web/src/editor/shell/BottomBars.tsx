@@ -20,7 +20,8 @@ export function UndoRedoPill() {
   const canRedo = useEditorState((s) => s.canRedo)
   const { readOnly } = useEditorCtx()
   const { compact } = useStage()
-  if (readOnly) return null
+  const phone = usePhone()
+  if (readOnly || phone) return null
   return (
     <div className={cx(styles.bottomLeft, styles.enter)}>
       <ToolbarPill label={t('editor.history', 'History')}>

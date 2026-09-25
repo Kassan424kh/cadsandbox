@@ -143,6 +143,11 @@ export interface NavigationSettings {
    * irregular deltas that cannot be told apart from a trackpad reliably.
    */
   trackpadGestures: boolean
+  /**
+   * View-only navigation (phones): every pointer/touch gesture moves the camera — one finger orbits
+   * (pans in orthographic views), two fingers pan + pinch-zoom. No marquee, no picking, no tools.
+   */
+  viewOnly: boolean
 }
 
 export interface MeasureResult {

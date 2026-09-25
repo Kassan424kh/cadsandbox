@@ -141,7 +141,7 @@ export class Viewport {
     else if (tool === 'orbit') mb.left = this.isOrtho ? A.TRUCK : A.ROTATE
     else mb.left = A.NONE
     const t = this.controls.touches
-    t.one = tool === 'pan' ? A.TOUCH_TRUCK : tool === 'orbit' && !this.isOrtho ? A.TOUCH_ROTATE : A.NONE
+    t.one = tool === 'pan' ? A.TOUCH_TRUCK : tool === 'orbit' ? (this.isOrtho ? A.TOUCH_TRUCK : A.TOUCH_ROTATE) : A.NONE
     t.two = this.isOrtho ? A.TOUCH_ZOOM_TRUCK : A.TOUCH_DOLLY_TRUCK
     t.three = A.TOUCH_TRUCK
     // Plan/ortho views should not orbit with the right button in 2D-only layouts; keep orbit available

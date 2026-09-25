@@ -1,5 +1,6 @@
 // Thin status bar: tool hint, VCB numeric input, cursor coordinates, snap/ortho/grid toggles,
 // units, viewport info, sync status.
+import { usePhone } from './hooks'
 import { useEffect, useRef, useState } from 'react'
 import { Grid3x3, Magnet, MoveHorizontal } from 'lucide-react'
 import { formatLength, type LengthUnit } from '@cadsandbox/shared'
@@ -81,6 +82,15 @@ export function StatusBar() {
   const measure = useEditorState((s) => s.measure)
   const stats = useEditorState((s) => s.stats)
   const meta = TOOL_META[tool]
+  const phone = usePhone()
+  if (phone) {
+    // phones are viewers: only the gesture hint
+    return (
+      <footer className={cx(styles.statusRow, styles.statusBar)} role="status">
+        <span className={styles.statusHint}>{t('status.hintViewer', 'Drag to orbit · two fingers to pan and zoom')}</span>
+      </footer>
+    )
+  }
   const defaultHint = tool === 'select' ? t('status.hintSelect', 'Click to select · drag to box-select · double-click to edit a group') : t('status.hintTool', '{tool} tool', { tool: t(meta.key, meta.fallback) })
 
   return (

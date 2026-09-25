@@ -2,7 +2,7 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { EditorState, EditorStats, NavigationSettings, SnapSettings, Theme, ViewportState } from './api'
 
-export const DEFAULT_NAVIGATION: NavigationSettings = { trackpadGestures: false }
+export const DEFAULT_NAVIGATION: NavigationSettings = { trackpadGestures: false, viewOnly: false }
 
 export const DEFAULT_SNAPPING: SnapSettings = {
   enabled: true,

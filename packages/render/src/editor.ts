@@ -540,7 +540,12 @@ class EditorImpl implements Editor, Core {
 
   /** Navigation preferences (persisted by the app, device-level). */
   setNavigation(patch: Partial<NavigationSettings>): void {
-    this.store.setState({ navigation: { ...this.store.getState().navigation, ...patch } })
+    const before = this.store.getState().navigation
+    this.store.setState({ navigation: { ...before, ...patch } })
+    if (patch.viewOnly !== undefined && patch.viewOnly !== before.viewOnly) {
+      if (patch.viewOnly) this.cancel() // drop any tool step in progress
+      this.input.applyNavigation()
+    }
   }
 
   setViewCubeOffset(offset: { top: number; left: number }): void {

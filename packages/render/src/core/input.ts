@@ -115,7 +115,7 @@ export class InputManager {
   /** Mouse-button mapping for the active tool / Space state. */
   applyNavigation(): void {
     const id = this.host.currentId
-    const nav = id === 'pan' ? 'pan' : id === 'orbit' ? 'orbit' : 'select'
+    const nav = this.viewOnly() ? 'orbit' : id === 'pan' ? 'pan' : id === 'orbit' ? 'orbit' : 'select'
     for (const vp of this.viewports.viewports) vp.setNavigationButtons(nav, this.spaceHeld)
   }
 
@@ -184,6 +184,8 @@ export class InputManager {
       this.gate(vp)
       return
     }
+    // view-only (phones): never start a marquee/selection/tool — camera-controls takes the gesture
+    if (this.viewOnly()) return
     const e = this.buildEvent(ev, vp)
     let consumed = false
     if (ev.button === 0 && !this.spaceHeld) consumed = this.host.pointerDown(e)
@@ -217,7 +219,7 @@ export class InputManager {
       vp.el.style.cursor = ''
       this.core.requestRender()
     }
-    if (this.hooks.isWalking()) return
+    if (this.hooks.isWalking() || this.viewOnly()) return
     const e = this.buildEvent(ev, vp)
     if (this.down && this.down.consumed) {
       this.host.pointerMove(e)
@@ -229,6 +231,11 @@ export class InputManager {
   private onPointerUp(ev: PointerEvent, vp: Viewport): void {
     const down = this.down
     this.down = null
+    if (this.viewOnly()) {
+      if (this.gated.size) setTimeout(() => this.ungate(), 0)
+      this.core.requestRender()
+      return
+    }
     if (this.hooks.isWalking()) {
       if (this.gated.size) setTimeout(() => this.ungate(), 0)
       return
@@ -287,7 +294,7 @@ export class InputManager {
   }
 
   private onDoubleClick(ev: MouseEvent, vp: Viewport): void {
-    if (ev.button !== 0 || this.cubeLocal(ev, vp)) return
+    if (ev.button !== 0 || this.cubeLocal(ev, vp) || this.viewOnly()) return
     const e = this.buildEvent(ev, vp)
     if (this.host.doubleClick(e)) {
       this.resetInput()
@@ -335,6 +342,10 @@ export class InputManager {
       if (vp.preset !== 'perspective' && vp.preset !== 'custom') vp.preset = 'custom'
     }
     this.core.notifyMotion()
+  }
+
+  private viewOnly(): boolean {
+    return this.core.store.getState().navigation.viewOnly
   }
 
   /** Bound the zoom per wheel event to ~6 % (pinch ~10 %) whatever the device's delta scaling. */

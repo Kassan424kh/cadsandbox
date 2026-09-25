@@ -231,6 +231,7 @@ export const editor2: Record<string, string> = {
   'status.grid': 'Raster',
   'status.gridToggle': 'Raster umschalten',
   'status.hintSelect': 'Klicken zum Auswählen · ziehen für Rahmenauswahl · Doppelklick bearbeitet eine Gruppe',
+  'status.hintViewer': 'Ziehen zum Drehen · zwei Finger zum Verschieben und Zoomen',
   'status.hintTool': 'Werkzeug {tool}',
   'status.ortho': 'Ortho',
   'status.orthoToggle': 'Ortho-Modus umschalten',

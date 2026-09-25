@@ -175,7 +175,7 @@ function initialState(activeLevel: string | null): EditorState {
       ortho: false,
       radiusPx: 10,
     },
-    navigation: { trackpadGestures: false },
+    navigation: { trackpadGestures: false, viewOnly: false },
     gridVisible: true,
     activeLevel,
     isolated: null,
