@@ -23,6 +23,9 @@ Daten (Zeitpunkt, angefragte Adresse, Statuscode, Browsertyp). IP-Adressen werde
 vorgeschalteten Webserver nicht protokolliert; in Anwendungsprotokollen erscheinen sie nur als
 täglich wechselnder, nicht umkehrbarer Hashwert. Protokolle werden nach wenigen Tagen
 überschrieben (Rotation). Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (sicherer Betrieb).
+Bei technischen Fehlern erfassen wir Fehlermeldung, Stacktrace, aufgerufene Seite und Browserkennung in
+einem selbst betriebenen Fehlerverfolgungssystem (GlitchTip) auf unseren Servern, ohne Projektinhalte;
+Speicherdauer 90 Tage, Rechtsgrundlage Art. 6 Abs. 1 lit. f DSGVO (Fehlerbehebung).
 
 **b) Benutzerkonto.** Name, E-Mail-Adresse, Passwort (nur als scrypt-Hash), optional Profilbild,
 Sprache, Zwei-Faktor-Daten (TOTP-Geheimnis, Backup-Codes) und Passkeys (öffentlicher Schlüssel).
@@ -63,8 +66,11 @@ den USA ist möglich; sie stützt sich auf den Angemessenheitsbeschluss zum EU-U
 (Art. 46 Abs. 2 lit. c DSGVO). Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO.
 Kein Newsletter, keine Öffnungs- oder Klickverfolgung.
 
-**i) Datensicherung.** Verschlüsselte Sicherungen werden bis zu 6 Monate aufbewahrt; gelöschte
-Daten verschwinden spätestens mit Ablauf dieser Frist auch aus den Sicherungen.
+**i) Datensicherung.** Wir erstellen täglich verschlüsselte Sicherungen der Datenbank und der gespeicherten
+Dateien bei einem zweiten Anbieter in der EU (Abschnitt 4). Die Sicherungen sind nur mit unserem Schlüssel
+lesbar und werden gestaffelt aufbewahrt (7 tägliche, 4 wöchentliche, 6 monatliche Sicherungen), also bis zu
+6 Monate; gelöschte Daten verschwinden spätestens mit Ablauf dieser Frist auch aus den Sicherungen.
+Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (Sicherheit und Wiederherstellbarkeit, Art. 32 DSGVO).
 
 ## 4. Empfänger
 

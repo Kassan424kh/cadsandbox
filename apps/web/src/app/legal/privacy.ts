@@ -24,7 +24,9 @@ export const privacy: LegalSet = {
         heading: '2. Hosting und Server-Protokolle',
         body: [
           'Unsere Server stehen in der Europäischen Union bei [PLACEHOLDER: Hosting-Anbieter, Standort]. Mit dem Anbieter besteht ein Auftragsverarbeitungsvertrag nach Art. 28 DSGVO.',
+          'Zur Wiederherstellbarkeit erstellen wir täglich verschlüsselte Sicherungen der Datenbank und der gespeicherten Dateien bei einem zweiten Anbieter in der EU ([PLACEHOLDER: Backup-Anbieter, Standort]; Auftragsverarbeitungsvertrag nach Art. 28 DSGVO). Die Sicherungen sind nur mit unserem Schlüssel lesbar und werden gestaffelt bis zu 6 Monate aufbewahrt (7 tägliche, 4 wöchentliche, 6 monatliche Sicherungen); gelöschte Daten verschwinden spätestens mit Ablauf dieser Frist auch aus den Sicherungen. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.',
           'Beim Aufruf verarbeitet der Server technisch notwendige Daten: gekürzte IP-Adresse, Zeitpunkt, angefragte Adresse, Statuscode und Browserkennung. Zweck: sicherer und stabiler Betrieb, Abwehr von Angriffen. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Speicherdauer: [PLACEHOLDER: 14] Tage.',
+          'Tritt ein technischer Fehler auf, erfassen wir Fehlermeldung, Programmstelle (Stacktrace), aufgerufene Seite und Browserkennung in einem selbst betriebenen Fehlerverfolgungssystem auf unseren Servern — ohne Inhalte Ihrer Projekte und ohne Weitergabe an Dritte. Zweck: Fehler finden und beheben. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Speicherdauer: 90 Tage.',
         ],
       },
       {
@@ -129,7 +131,9 @@ export const privacy: LegalSet = {
         heading: '2. Hosting and server logs',
         body: [
           'Our servers are located in the European Union at [PLACEHOLDER: hosting provider, location]. A data processing agreement under Art. 28 GDPR is in place.',
+          'To be able to recover from failures we create daily encrypted backups of the database and the stored files with a second provider in the EU ([PLACEHOLDER: backup provider, location]; data processing agreement under Art. 28 GDPR). The backups can only be read with our key and are kept on a rolling schedule for up to 6 months (7 daily, 4 weekly, 6 monthly backups); deleted data disappears from the backups when that period ends at the latest. Legal basis: Art. 6(1)(f) GDPR.',
           'When you use the service, the server processes technically necessary data: shortened IP address, time, requested address, status code and browser identifier — to operate the service securely and fend off attacks. Legal basis: Art. 6(1)(f) GDPR. Retention: [PLACEHOLDER: 14] days.',
+          'When a technical error occurs we record the error message, the code location (stack trace), the page and the browser identifier in an error tracker we run ourselves on our servers — without the content of your projects and without passing it to third parties. Purpose: finding and fixing bugs. Legal basis: Art. 6(1)(f) GDPR. Retention: 90 days.',
         ],
       },
       {

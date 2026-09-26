@@ -11,12 +11,18 @@
 #    memory, so two permanent instances would split editors between them. Stored document states are
 #    merged (CRDT union) during the short overlap, so no edit is lost.
 #  • Deploy command (Dokploy → Advanced → Command), with <app> = the compose's app name:
-#      compose -p <app> -f ./docker-compose.dokploy.yml build app
+#      compose -p <app> -f ./docker-compose.dokploy.yml build app backup
 #      && docker compose -p <app> -f ./docker-compose.dokploy.yml up -d --no-deps --wait --wait-timeout 240 app2
 #      && docker compose -p <app> -f ./docker-compose.dokploy.yml up -d --no-deps --wait --wait-timeout 240 app
 #      && docker compose -p <app> -f ./docker-compose.dokploy.yml stop app2
 #      && docker compose -p <app> -f ./docker-compose.dokploy.yml up -d --remove-orphans
-#  • Configuration: Dokploy → Environment (written to .env next to this file); see apps/server/.env.example.
+#  • Backups: the "backup" service streams a daily pg_dump into an encrypted restic repository and mirrors
+#    the blob bucket (client-side encrypted) to a SECOND EU S3 provider — runbook and restore drill in
+#    apps/server/deploy/BACKUP-RESTORE.md. Nothing unencrypted is kept on this host.
+#  • Limits: app containers run with APP_MEM_LIMIT / APP_CPUS (2g / 2) and a Node heap cap
+#    (APP_NODE_HEAP_MB, 1536); the backup service with BACKUP_MEM_LIMIT / BACKUP_CPUS (1g / 1).
+#  • Configuration: Dokploy → Environment (written to .env next to this file); see apps/server/.env.example
+#    and the variable list in docs/DEPLOYMENT.md.
 #  The standalone self-hosting setup (own Postgres + Caddy on 80/443) stays in docker-compose.yml.
 # =============================================================================
 
@@ -43,6 +49,15 @@ x-app: &app
     DATA_DIR: /data
     TRUST_PROXY: 'true'
     TRUSTED_PROXIES: 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+    # Self-service sign-up stays closed until the legal pages are final — set SIGNUP_ENABLED=true to open it.
+    SIGNUP_ENABLED: ${SIGNUP_ENABLED:-false}
+    # V8 heap cap below the container limit (rest: buffers, WASM, native); source maps for stack traces.
+    NODE_OPTIONS: --enable-source-maps --max-old-space-size=${APP_NODE_HEAP_MB:-1536}
+    # largest collaboration WebSocket message (bytes); env.ts enforces >= 65536, app default is 16 MiB.
+    COLLAB_MAX_MESSAGE_BYTES: ${COLLAB_MAX_MESSAGE_BYTES:-4194304}
+  # Hard limits so one busy container cannot starve the host (Traefik, database, backup).
+  mem_limit: ${APP_MEM_LIMIT:-2g}
+  cpus: ${APP_CPUS:-2}
   networks:
     - internal
     - proxy
@@ -94,30 +109,79 @@ services:
     pull_policy: never
     profiles: [standby]
 
-  # Daily dump of the database, kept for ${BACKUP_KEEP_DAYS} days on this server — a second copy
-  # next to the database server itself.
+  # Encrypted off-site backups — apps/server/deploy/backup.sh, runbook apps/server/deploy/BACKUP-RESTORE.md.
+  # Every run (BACKUP_SCHEDULE, default 03:15 UTC): pg_dump --format=custom streamed into the restic
+  # repository (AES-256, client-side) + rclone mirror of the blob bucket into an rclone-crypt prefix of the
+  # off-site bucket, then `restic forget --prune` 7 daily / 4 weekly / 6 monthly. `restic check` weekly.
+  # Failures: "BACKUP FAILED" log line, exit 1, unhealthy container, BACKUP_HEARTBEAT_URL /fail.
+  # No dump is ever written to a disk on this host (the previous plaintext dump volume is gone).
+  # Missing BACKUP_* variables do not break the app deploy: the service logs what is missing and stays
+  # unhealthy until fixed.
   backup:
-    image: postgres:17-alpine
+    build:
+      context: ./apps/server/deploy
+      dockerfile: backup.Dockerfile
+    image: cadsandbox-backup:local
     restart: unless-stopped
     environment:
+      TZ: ${BACKUP_TZ:-UTC}
       DATABASE_URL: ${DATABASE_URL}
-      KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        until pg_isready -q -d "$$DATABASE_URL"; do sleep 5; done
-        while true; do
-          file=/backups/cadsandbox-$$(date +%Y-%m-%d).dump
-          pg_dump -Fc -f "$$file.tmp" -d "$$DATABASE_URL" && mv "$$file.tmp" "$$file" && echo "backup written: $$file"
-          find /backups -name 'cadsandbox-*.dump' -mtime +$$KEEP_DAYS -delete
-          sleep 86400
-        done
+      # source: the app's blob bucket (a read-only key is enough — BACKUP_SOURCE_S3_* override the app's)
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_BUCKET: ${S3_BUCKET:-cadsandbox}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_PREFIX: ${S3_PREFIX:-blobs/}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
+      S3_ACCESS_KEY_ID: ${BACKUP_SOURCE_S3_ACCESS_KEY_ID:-${S3_ACCESS_KEY_ID}}
+      S3_SECRET_ACCESS_KEY: ${BACKUP_SOURCE_S3_SECRET_ACCESS_KEY:-${S3_SECRET_ACCESS_KEY}}
+      S3_RCLONE_PROVIDER: ${S3_RCLONE_PROVIDER:-Other}
+      # target: a second EU S3-compatible provider, separate account (see docs/DEPLOYMENT.md § 6)
+      BACKUP_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+      BACKUP_S3_REGION: ${BACKUP_S3_REGION:-eu-central-1}
+      BACKUP_S3_PROVIDER: ${BACKUP_S3_PROVIDER:-Other}
+      BACKUP_S3_FORCE_PATH_STYLE: ${BACKUP_S3_FORCE_PATH_STYLE:-true}
+      BACKUP_S3_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:-}
+      BACKUP_S3_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
+      # restic: RESTIC_REPOSITORY defaults to s3:<BACKUP_S3_ENDPOINT>/<BACKUP_S3_BUCKET>/restic
+      RESTIC_REPOSITORY: ${RESTIC_REPOSITORY:-}
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD:-}
+      RESTIC_CACHE_DIR: /cache
+      # blob mirror: rclone crypt under <BACKUP_S3_BUCKET>/<BACKUP_BLOB_PATH>; passphrase defaults to RESTIC_PASSWORD
+      BACKUP_BLOBS: ${BACKUP_BLOBS:-true}
+      BACKUP_BLOB_PATH: ${BACKUP_BLOB_PATH:-blobs}
+      BACKUP_BLOB_PASSWORD: ${BACKUP_BLOB_PASSWORD:-}
+      BACKUP_BLOB_DELETED_KEEP_DAYS: ${BACKUP_BLOB_DELETED_KEEP_DAYS:-190}
+      # schedule (cron, five fields, in BACKUP_TZ) and retention
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-15 3 * * *}
+      BACKUP_CHECK_SCHEDULE: ${BACKUP_CHECK_SCHEDULE:-45 4 * * 0}
+      BACKUP_RUN_ON_START: ${BACKUP_RUN_ON_START:-false}
+      BACKUP_KEEP_DAILY: ${BACKUP_KEEP_DAILY:-7}
+      BACKUP_KEEP_WEEKLY: ${BACKUP_KEEP_WEEKLY:-4}
+      BACKUP_KEEP_MONTHLY: ${BACKUP_KEEP_MONTHLY:-6}
+      # monitoring: Uptime Kuma push URL or healthchecks.io-style ping URL; alert when silent for 26 h
+      BACKUP_HEARTBEAT_URL: ${BACKUP_HEARTBEAT_URL:-}
+      BACKUP_MAX_AGE_HOURS: ${BACKUP_MAX_AGE_HOURS:-26}
     volumes:
-      - backups:/backups
+      - restic-cache:/cache
     networks:
       - internal
+      - proxy
+    labels:
+      traefik.enable: 'false'
+    mem_limit: ${BACKUP_MEM_LIMIT:-1g}
+    cpus: ${BACKUP_CPUS:-1}
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ['CMD', 'backup.sh', 'healthcheck']
+      interval: 5m
+      timeout: 15s
+      retries: 1
+      start_period: 2m
     logging: *logging
 
 networks:
@@ -129,4 +193,6 @@ networks:
     external: true
 
 volumes:
-  backups:
+  # restic's local metadata cache (no data; safe to delete). The old plaintext `backups` volume is
+  # no longer used — remove it with `docker volume rm <project>_backups` after the first off-site backup.
+  restic-cache:

@@ -21,6 +21,7 @@ Implemented by the background jobs in `apps/server/src/jobs/scheduler.ts` (const
 | Audit log | **365 days** | job `purge-audit` |
 | Rate-limit counters | ≤ 1 h, memory only | window expiry / restart |
 | Application & proxy logs | rotation at 5 × 10 MB per service (typically days) | Docker log rotation (*operational*) |
-| Backups | 7 daily, 4 weekly, 6 monthly (max. ~6 months) | `restic forget --prune` (*operational*) |
+| Backups — database dumps | 7 daily, 4 weekly, 6 monthly (oldest ≈ 6 months) | `backup` service (`apps/server/deploy/backup.sh`): `restic forget --prune` after every run (*operational*, encrypted, off-site) |
+| Backups — file mirror (blobs) | mirror of the live bucket; objects removed by `blob-gc` stay **190 days** in `deleted/<date>/` (≈ 6 months) | `backup` service: `rclone sync --backup-dir` + dated purge (*operational*, encrypted, off-site) |
 | Data export ZIP | not stored (streamed on request) | — |
 | Local browser data (no account) | until the user clears it | user-controlled (IndexedDB) |

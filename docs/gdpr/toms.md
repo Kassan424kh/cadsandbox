@@ -39,7 +39,9 @@ Abfrage filtert nach der effektiven Rolle. Entwicklungs-/Testsysteme nutzen kein
 **Pseudonymisierung & Verschlüsselung (Art. 32 Abs. 1 lit. a)**
 - TLS 1.2+ (Caddy, HSTS mit Preload), SMTP mit STARTTLS-Pflicht, Postgres-TLS optional.
 - Ruhende Daten: AES-256-GCM für Dateien, Kollaborationsdokumente und Versionen (Schlüssel je Objekt
-  via HKDF, Bindung an Objekt-ID), verschlüsselte Backups (restic).
+  via HKDF, Bindung an Objekt-ID); Backups clientseitig verschlüsselt (Datenbank: restic, AES-256;
+  Dateien: rclone-crypt, XSalsa20-Poly1305, auch Objektnamen) — der Backup-Anbieter sieht nur Chiffrat,
+  die Schlüssel liegen ausschließlich beim Betreiber (Offline-Kopie ☐).
 - IP-Adressen: gekürzt gespeichert, in Logs nur als täglich wechselnder HMAC; Proxy-Logs ohne IP.
 
 ## 2. Integrität (Art. 32 Abs. 1 lit. b)
@@ -55,12 +57,20 @@ Versionshistorie der Projektdokumente (benannte + stündliche Auto-Versionen).
 
 ## 3. Verfügbarkeit und Belastbarkeit (Art. 32 Abs. 1 lit. b, c)
 
-- Tägliche verschlüsselte Offsite-Backups (DB-Dump + Dateien) bei separatem EU-Anbieter,
-  Aufbewahrung 7/4/6; monatlicher Wiederherstellungstest ☐.
-- Health-Checks, automatischer Neustart der Container, Datenbank mit Prüfsummen.
-- Schutz vor Überlast: Rate Limits je IP/Nutzer, Größenlimits für Anfragen und Uploads, Speicherquoten,
-  Timeouts gegen Slowloris.
-- ☐ Überwachung (Uptime, Fehlerquote, Speicherplatz) mit Alarmierung.
+- Tägliche verschlüsselte Offsite-Backups (Datenbank-Dump + Dateien) bei einem zweiten EU-Anbieter mit
+  separatem Konto (Dienst `backup` in `docker-compose.dokploy.yml`); Aufbewahrung 7 täglich / 4 wöchentlich /
+  6 monatlich, gelöschte Dateien bleiben höchstens 190 Tage in der Spiegelkopie; wöchentliche
+  Integritätsprüfung (`restic check`). Ein fehlgeschlagenes Backup wird protokolliert, macht den
+  Container „unhealthy" und meldet sich per Heartbeat (Alarm, wenn 26 h keine erfolgreiche Sicherung
+  vorliegt) ☐ Monitor eingerichtet. Vierteljährlicher Wiederherstellungstest nach
+  `apps/server/deploy/BACKUP-RESTORE.md` (Datenbank in leere Datenbank, Dateien in Test-Bucket,
+  Zeilenzahlen und sha256-Stichproben) ☐ letzter Test: [Datum].
+- Health-Checks, automatischer Neustart der Container, Datenbank mit Prüfsummen; Deployments ohne
+  Unterbrechung (Standby-Container, Traefik-Health-Routing).
+- Schutz vor Überlast: Rate Limits je IP/Nutzer, Größenlimits für Anfragen, Uploads und
+  Kollaborationsnachrichten (4 MiB), Speicherquoten, Timeouts gegen Slowloris; CPU- und Speicherlimits je
+  Container (App 2 CPU / 2 GB, Node-Heap 1,5 GB; Backup 1 CPU / 1 GB).
+- ☐ Überwachung (Uptime, Fehlerquote, Speicherplatz, Backup-Heartbeat) mit Alarmierung.
 
 ## 4. Verfahren zur regelmäßigen Überprüfung (Art. 32 Abs. 1 lit. d)
 

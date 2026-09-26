@@ -21,7 +21,9 @@ strictly necessary session cookie.
 **a) Using the app / server logs.** Technically necessary request data (time, URL, status,
 browser type). Our reverse proxy does not log IP addresses; application logs contain only a
 non-reversible hash that changes daily. Logs are rotated after a few days. Legal basis: Art. 6(1)(f)
-GDPR (secure operation).
+GDPR (secure operation). When technical errors occur we record the error message, stack trace, page
+and browser identifier in an error tracker we run ourselves (GlitchTip) on our servers, without project
+content; retention 90 days, legal basis Art. 6(1)(f) GDPR (fixing bugs).
 
 **b) Your account.** Name, e-mail, password (stored only as a scrypt hash), optional avatar,
 language, two-factor data (TOTP secret, backup codes) and passkeys (public key). Per session we
@@ -60,8 +62,11 @@ EU-US Data Privacy Framework adequacy decision (Art. 45 GDPR), under which Googl
 by EU Standard Contractual Clauses (Art. 46(2)(c) GDPR). Legal basis: Art. 6(1)(b) GDPR. No newsletters, no open
 or click tracking.
 
-**i) Backups.** Encrypted backups are kept for up to 6 months; deleted data disappears from
-backups when that period ends.
+**i) Backups.** We create daily encrypted backups of the database and the stored files with a second
+provider in the EU (section 4). The backups can only be read with our key and are kept on a rolling
+schedule (7 daily, 4 weekly, 6 monthly backups), i.e. for up to 6 months; deleted data disappears from
+the backups when that period ends at the latest. Legal basis: Art. 6(1)(f) GDPR (security and
+recoverability, Art. 32 GDPR).
 
 ## 4. Recipients
 

@@ -35,12 +35,14 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 
 # ---------------------------------------------------------------- runtime
 FROM ${NODE_IMAGE} AS runtime
+# NODE_OPTIONS: V8 heap cap (MB) so the process fails fast instead of being OOM-killed by the container
+# limit; docker-compose.dokploy.yml overrides it via APP_NODE_HEAP_MB. Keep --enable-source-maps.
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=8787 \
     DATA_DIR=/data \
     BETTER_AUTH_TELEMETRY=0 \
-    NODE_OPTIONS=--enable-source-maps
+    NODE_OPTIONS="--enable-source-maps --max-old-space-size=1536"
 RUN apt-get update && apt-get install -y --no-install-recommends tini ca-certificates && rm -rf /var/lib/apt/lists/* \
  && mkdir -p /data && chown node:node /data
 WORKDIR /app/apps/server

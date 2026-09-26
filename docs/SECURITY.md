@@ -126,7 +126,7 @@ share-link acceptance 30/10 min per IP, wrong link passwords 10/10 min per link,
 | `STORAGE_ENCRYPTION_KEY` | master key for at-rest encryption | `node dist/cli.js generate-key` | add new key, move old to `STORAGE_ENCRYPTION_OLD_KEYS` (decrypt-only); new writes use the new key; collab docs are re-encrypted on their next save, existing blobs and versions keep their original key — never drop an old key while such data exists |
 | `POSTGRES_PASSWORD` | database | password manager | yearly / on staff change |
 | SMTP / S3 credentials | provider access | provider console | yearly, least privilege (bucket-scoped keys) |
-| restic password | backup encryption | password manager + **offline copy** | never lose it — backups are unrecoverable without it |
+| `RESTIC_PASSWORD` (+ `BACKUP_BLOB_PASSWORD` if set) | encryption of the off-site DB backups and blob mirror | password manager + **offline copy** | never lose it — backups are unrecoverable without it |
 
 Secrets are passed as environment variables (`.env` with mode 600, or Docker secrets); they are
 never logged. Keep an offline, access-controlled copy of `STORAGE_ENCRYPTION_KEY` — losing it
@@ -156,6 +156,6 @@ every ciphertext so old keys can be retired once no data references them.
 - [ ] `STORAGE_ENCRYPTION_KEY` set and backed up offline
 - [ ] SMTP over TLS with an EU provider, SPF/DKIM/DMARC for the sender domain
 - [ ] `TRUST_PROXY=true` only behind Caddy; database not exposed (internal Docker network)
-- [ ] Daily encrypted backups tested by a monthly restore drill
+- [ ] Daily encrypted off-site backups (backup service healthy, heartbeat monitored) and a quarterly restore drill — apps/server/deploy/BACKUP-RESTORE.md
 - [ ] Dependency updates monthly (`pnpm outdated`, advisories), base images rebuilt
 - [ ] First admin created, `ADMIN_EMAILS` cleared afterwards
