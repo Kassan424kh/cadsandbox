@@ -7,7 +7,7 @@
 import type { IncomingMessage } from 'node:http'
 import type { Duplex } from 'node:stream'
 import { Database } from '@hocuspocus/extension-database'
-import { Hocuspocus, type beforeHandleAwarenessPayload, type Connection, type Extension, type onAuthenticatePayload, type onStoreDocumentPayload, type WebSocketLike } from '@hocuspocus/server'
+import { Hocuspocus, type afterUnloadDocumentPayload, type beforeHandleAwarenessPayload, type Connection, type Extension, type onAuthenticatePayload, type onChangePayload, type onStoreDocumentPayload, type WebSocketLike } from '@hocuspocus/server'
 import nodeAdapter from 'crossws/adapters/node'
 import { eq, sql } from 'drizzle-orm'
 import * as Y from 'yjs'
@@ -25,7 +25,7 @@ import { LIMIT_RULES } from '../http/rate-limit'
 import { audit, type AuditThrottle } from '../services/audit'
 import type { AccessEvents } from '../services/events'
 import type { ShareGrants } from '../services/share-grants'
-import { refreshProjectSize } from '../services/projects'
+import { refreshProjectSize, storageUsage } from '../services/projects'
 import { decideCollabAccess, stillAllowed } from './auth'
 
 export interface CollabDeps {
@@ -87,11 +87,23 @@ export function createCollab(d: CollabDeps): CollabService {
   const { config, log, db, ring } = d
   const trusted = new Set(config.trustedOrigins)
   const deletedProjects = new Set<string>()
-  const access = { db, auth: d.auth, publicSharing: config.features.publicSharing, grants: d.grants }
+  const limits = { storageQuotaBytes: config.storageQuotaBytes, maxDocBytes: config.collabMaxDocBytes }
+  const access = { db, auth: d.auth, publicSharing: config.features.publicSharing, grants: d.grants, limits }
+  /** Approximate size of each loaded document: its stored size plus the updates received since. */
+  const docBytes = new Map<string, number>()
+  /** Documents that crossed the size limit: connections switched to read-only (with their previous mode). */
+  const oversize = new Map<string, Map<Connection, boolean>>()
+  /** Owners whose storage was checked recently (ownerId → time), to keep the check off the hot path. */
+  const quotaChecked = new Map<string, number>()
 
   const persistence = new Database({
-    fetch: async ({ documentName }) => loadDocState(db, ring, documentName),
+    fetch: async ({ documentName }) => {
+      const state = await loadDocState(db, ring, documentName)
+      docBytes.set(documentName, state?.byteLength ?? 0)
+      return state
+    },
     store: async ({ documentName, state }) => {
+      docBytes.set(documentName, state.byteLength)
       const parsed = docNames.parse(documentName)
       if (!parsed || deletedProjects.has(parsed.projectId)) return
       try {
@@ -149,16 +161,67 @@ export function createCollab(d: CollabDeps): CollabService {
         }
       }
     },
+    // Size limit per design: stop the growth at once (read-only), store, then decide in afterStoreDocument.
+    async onChange(data: onChangePayload) {
+      const name = data.documentName
+      const size = (docBytes.get(name) ?? 0) + data.update.byteLength
+      docBytes.set(name, size)
+      if (size <= limits.maxDocBytes || oversize.has(name)) return
+      const previous = new Map<Connection, boolean>()
+      for (const conn of data.document.connections.keys()) {
+        previous.set(conn, conn.readOnly)
+        conn.readOnly = true
+      }
+      oversize.set(name, previous)
+      hocuspocus.flushPendingStores()
+    },
     async afterStoreDocument(data: onStoreDocumentPayload) {
       const parsed = docNames.parse(data.documentName)
       if (!parsed || deletedProjects.has(parsed.projectId)) return
       try {
         if (!parsed.fileId) await syncManifestInfo(parsed.projectId, data.document)
         await refreshProjectSize(db, parsed.projectId, true)
+        await enforceLimits(parsed.projectId, data.documentName)
       } catch (err) {
         log.warn({ doc: data.documentName, err: (err as Error).message }, 'project touch failed')
       }
     },
+    async afterUnloadDocument(data: afterUnloadDocumentPayload) {
+      docBytes.delete(data.documentName)
+      oversize.delete(data.documentName)
+    },
+  }
+
+  const closeForAccess = (conn: Connection) => conn.close({ code: 4403, reason: 'access-changed' } as unknown as Parameters<Connection['close']>[0])
+
+  /**
+   * After a store: connections that must turn read-only (design too large, or the owner ran out of
+   * storage) are closed — the clients reopen the project and learn why from its `writeBlock`.
+   */
+  async function enforceLimits(projectId: string, name: string) {
+    const flipped = oversize.get(name)
+    if (flipped) {
+      oversize.delete(name)
+      if ((docBytes.get(name) ?? 0) <= limits.maxDocBytes) {
+        // The running estimate was high (updates overlap); the stored design is within the limit.
+        // Updates dropped while read-only must be re-sent: a transient close makes clients resync.
+        for (const [conn, readOnly] of flipped) {
+          conn.readOnly = readOnly
+          conn.close({ code: 4000, reason: 'resync' } as unknown as Parameters<Connection['close']>[0])
+        }
+      } else {
+        log.warn({ doc: name, bytes: docBytes.get(name) }, 'design over the size limit — now read-only')
+        for (const conn of flipped.keys()) closeForAccess(conn)
+      }
+    }
+    const [p] = await db.select({ ownerId: projects.ownerId }).from(projects).where(eq(projects.id, projectId)).limit(1)
+    if (!p) return
+    const now = Date.now()
+    if (now - (quotaChecked.get(p.ownerId) ?? 0) < 30_000) return
+    if (quotaChecked.size > 5000) for (const [k, t] of quotaChecked) if (now - t >= 30_000) quotaChecked.delete(k)
+    quotaChecked.set(p.ownerId, now)
+    if ((await storageUsage(db, p.ownerId)) < limits.storageQuotaBytes) return
+    for (const { conn } of liveConnections((c) => c.ownerId === p.ownerId)) if (!conn.readOnly) closeForAccess(conn)
   }
 
   /** Keep projects.name/description in sync with renames made in the editor. */
@@ -249,7 +312,7 @@ export function createCollab(d: CollabDeps): CollabService {
           ok = await stillAllowed(access, ctx, conn.readOnly).catch(() => false)
           cache.set(key, ok)
         }
-        if (!ok) conn.close({ code: 4403, reason: 'access-changed' } as unknown as Parameters<Connection['close']>[0])
+        if (!ok) closeForAccess(conn)
       }
     }).catch((err: unknown) => log.error({ err: (err as Error).message }, 'collab revalidation failed'))
     return revalidating
@@ -302,8 +365,12 @@ export function createCollab(d: CollabDeps): CollabService {
       hocuspocus.flushPendingStores()
       hocuspocus.closeConnections()
       adapter.closeAll(1001, 'server shutdown')
-      const until = Date.now() + 5000
+      // Documents unload once their pending store finished. The database closes right after this, so
+      // wait for all of them — bounded by the 18 s force-exit in index.ts (≈5.5 s of it is used before).
+      const until = Date.now() + 11_000
       while (hocuspocus.getDocumentsCount() > 0 && Date.now() < until) await new Promise((r) => setTimeout(r, 50))
+      const left = hocuspocus.getDocumentsCount()
+      if (left > 0) log.warn({ documents: left }, 'collab shutdown: documents still unsaved')
     },
   }
 }

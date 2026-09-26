@@ -9,8 +9,10 @@ import type { DesignHandle, LibraryStore, ProjectSession } from '../data/types'
 
 export interface EditorContextValue {
   editor: Editor
-  /** false while the render engine (createEditor) is unavailable and a placeholder engine is used. */
+  /** false when the render engine could not start and a placeholder engine is used. */
   engineAvailable: boolean
+  /** Why the render engine could not start (shown to the user), or null. */
+  engineError: string | null
   doc: CadDocument
   session: ProjectSession
   handle: DesignHandle
@@ -21,6 +23,8 @@ export interface EditorContextValue {
   /** Import a project archive (.csbx) as a new project and open it (absent: not available here). */
   onImportProject?(file: File): void
   readOnly: boolean
+  /** Read-only because the screen is too small to edit on (phones), not because of the user's role. */
+  viewOnlyOnDevice: boolean
 }
 
 export const EditorContext = createContext<EditorContextValue | null>(null)

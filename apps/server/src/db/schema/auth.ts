@@ -23,6 +23,9 @@ export const user = pgTable(
     twoFactorEnabled: boolean('two_factor_enabled').default(false),
     // app
     locale: text('locale').default('en'),
+    /** Terms-of-service version accepted, and when (proof of inclusion, § 305 BGB). */
+    termsVersion: text('terms_version'),
+    termsAcceptedAt: ts('terms_accepted_at'),
   },
   (t) => [index('user_created_at_idx').on(t.createdAt)],
 )

@@ -35,6 +35,31 @@
   }
 }
 
+.fullPageStack {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+}
+
+.legalLinks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  font-size: var(--cs-text-xs);
+}
+
+.legalLinks a {
+  color: var(--cs-text-2);
+  text-decoration: none;
+}
+
+.legalLinks a:hover {
+  color: var(--cs-text);
+  text-decoration: underline;
+}
+
 .errorCard {
   width: min(520px, 100%);
   display: grid;

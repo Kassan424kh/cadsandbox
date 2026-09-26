@@ -1,7 +1,7 @@
 // better-auth React client (session cookie; nothing is stored in localStorage).
 // Plugins mirror the server: organization, admin (impersonation), two-factor (TOTP), passkeys.
 import { createAuthClient } from 'better-auth/react'
-import { adminClient, organizationClient, twoFactorClient } from 'better-auth/client/plugins'
+import { adminClient, inferAdditionalFields, organizationClient, twoFactorClient } from 'better-auth/client/plugins'
 import { passkeyClient } from '@better-auth/passkey/client'
 import { API_ORIGIN } from '../api/client'
 
@@ -11,6 +11,8 @@ export const authClient = createAuthClient({
   baseURL: `${origin}/api/auth`,
   fetchOptions: { credentials: 'include' },
   plugins: [
+    // Sign-up carries the accepted terms version (see auth.ts additionalFields on the server).
+    inferAdditionalFields({ user: { termsVersion: { type: 'string', required: false } } }),
     organizationClient(),
     adminClient(),
     // The sign-in form handles `twoFactorRedirect` itself (inline TOTP step), so no page redirect.

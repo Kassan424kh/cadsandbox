@@ -57,6 +57,8 @@ export interface MeDTO {
   storage: { usedBytes: number; quotaBytes: number }
   /** Pending account deletion (GDPR Art. 17), if the user requested it. */
   deletionScheduledAt: string | null
+  /** Version of the terms of service the user last accepted (null: none recorded). */
+  termsAcceptedVersion: string | null
 }
 
 export interface FolderDTO {
@@ -80,6 +82,11 @@ export interface ProjectDTO {
   visibility: ProjectVisibility
   /** Caller's effective role. */
   role: ProjectRole
+  /**
+   * Why editing is paused for everyone (single-project reads only): the owner is out of storage, or a
+   * design outgrew the per-document limit. Absent/null = editable per role.
+   */
+  writeBlock?: WriteBlock | null
   thumbnailUrl: string | null
   starred: boolean
   sizeBytes: number
@@ -88,12 +95,16 @@ export interface ProjectDTO {
   deletedAt: string | null
 }
 
+export type WriteBlock = 'storage_full' | 'design_too_large'
+
 export interface ProjectMemberDTO {
   userId: string
   email: string
   name: string
   image: string | null
   role: ProjectRole
+  /** Access comes only from an accepted share link — it ends when the link is deleted or expires. */
+  viaLink: boolean
   addedAt: string
 }
 
@@ -218,11 +229,20 @@ export interface AnnouncementDTO {
   endsAt: string | null
 }
 
+/** Sign-up proof-of-work: find `number` with sha256(salt + number) = challenge (0 ≤ number ≤ maxnumber). */
+export interface SignupChallengeDTO {
+  algorithm: 'SHA-256'
+  challenge: string
+  salt: string
+  maxnumber: number
+  signature: string
+}
+
 export interface PublicConfigDTO {
   appName: string
   version: string
   /** Features the server has enabled. The web app also runs fully offline without a server. */
-  features: { signup: boolean; collab: boolean; emailVerification: boolean; passkeys: boolean; publicSharing: boolean }
+  features: { signup: boolean; signupCaptcha: boolean; collab: boolean; emailVerification: boolean; passkeys: boolean; publicSharing: boolean; errorReporting: boolean }
   limits: { maxBlobBytes: number; maxProjectsFree: number; storageQuotaBytes: number }
   legal: { imprintUrl: string; privacyUrl: string; termsUrl: string; dpaUrl: string }
   /** Path of the Hocuspocus websocket relative to the API origin. */
@@ -256,6 +276,14 @@ export const schemas = {
     locale: z.string().max(16).optional(),
   }),
   deleteMe: z.object({ confirmEmail: z.string().email() }),
+  acceptTerms: z.object({ version: z.string().min(1).max(40) }),
+  clientError: z.object({
+    message: z.string().max(1000),
+    type: z.string().max(100).optional(),
+    stack: z.string().max(8000).optional(),
+    path: z.string().max(300),
+    release: z.string().max(50).optional(),
+  }),
   createFolder: z.object({ name, parentId: id.nullable().optional(), orgId: id.nullable().optional() }),
   updateFolder: z.object({ name: name.optional(), parentId: id.nullable().optional() }),
   listProjects: z.object({
@@ -352,6 +380,9 @@ export const routes = {
   exportMe: 'GET /api/me/export', // application/zip — GDPR Art. 15/20 export (profile, projects, docs, assets, audit)
   deleteMe: 'DELETE /api/me', // schemas.deleteMe → { deletionScheduledAt } (7-day grace, then hard delete)
   cancelDeleteMe: 'POST /api/me/cancel-deletion',
+  acceptTerms: 'POST /api/me/terms', // schemas.acceptTerms → MeDTO (records the accepted terms version)
+  signupChallenge: 'GET /api/signup-challenge', // proof-of-work challenge; the solution goes in the sign-up's x-captcha header
+  clientError: 'POST /api/client-errors', // schemas.clientError → 204; forwarded to the error tracker when configured
 
   listFolders: 'GET /api/folders', // ?orgId= → FolderDTO[]
   createFolder: 'POST /api/folders',
@@ -444,10 +475,19 @@ export function routePath(key: RouteKey, params: Record<string, string> = {}): s
   return path.replace(/:(\w+)/g, (_, k: string) => encodeURIComponent(params[k] ?? ''))
 }
 
+/**
+ * Terms of service: bump `termsVersion` (the terms' "last updated" date) whenever the terms change —
+ * signed-in users are then asked to accept the new version. `minAge` is stated at sign-up.
+ */
+export const LEGAL = {
+  termsVersion: '2026-09-26',
+  minAge: 16,
+} as const
+
 export const LIMITS = {
   maxBlobBytes: 200 * 1024 * 1024,
   maxThumbnailBytes: 512 * 1024,
-  defaultStorageQuotaBytes: 5 * 1024 * 1024 * 1024,
+  defaultStorageQuotaBytes: 1024 * 1024 * 1024,
   trashRetentionDays: 30,
   accountDeletionGraceDays: 7,
   auditRetentionDays: 365,

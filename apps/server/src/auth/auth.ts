@@ -8,7 +8,7 @@ import { admin, organization, twoFactor } from 'better-auth/plugins'
 import type { AccessControl } from 'better-auth/plugins/access'
 import { adminAc, defaultAc, userAc } from 'better-auth/plugins/admin/access'
 import { eq } from 'drizzle-orm'
-import { BRAND } from '@cadsandbox/shared'
+import { BRAND, LEGAL } from '@cadsandbox/shared'
 import type { Db } from '../db/client'
 import { authSchema, user as userTable } from '../db/schema'
 import type { Config } from '../env'
@@ -21,6 +21,8 @@ import { audit } from '../services/audit'
 import type { AccessEvents } from '../services/events'
 import { acceptPendingInvites, ensureBootstrapAdmin } from '../services/users'
 import { auditAuthRequest, IMPERSONATION_BLOCKED } from './audit-hooks'
+import type { ProofOfWork } from './captcha'
+import { isBlockedEmail } from './disposable'
 
 /** Set by our HTTP layer from the socket / trusted proxy chain (client-supplied values are stripped). */
 export const CLIENT_IP_HEADER = 'x-csb-client-ip'
@@ -31,6 +33,8 @@ export interface AuthDeps {
   log: Logger
   mailer: Mailer
   events: AccessEvents
+  /** Sign-up proof-of-work; null = not required. */
+  pow?: ProofOfWork | null
 }
 
 /** HTTP paths disabled on /api/auth — our /api/admin + /api/me endpoints wrap these with auditing/GDPR flows. */
@@ -54,7 +58,7 @@ const DAY = 86_400
 
 export function createAuth(d: AuthDeps) {
   process.env.BETTER_AUTH_TELEMETRY = '0'
-  const { config, db, log, mailer, events } = d
+  const { config, db, log, mailer, events, pow } = d
   const verificationOn = config.features.emailVerification
 
   const onVerified = async (u: { id: string; email: string; role?: string | null; emailVerified: boolean }) => {
@@ -83,6 +87,9 @@ export function createAuth(d: AuthDeps) {
     user: {
       additionalFields: {
         locale: { type: 'string', required: false, defaultValue: 'en', input: true },
+        // Sent with the sign-up form; checked and time-stamped in databaseHooks.user.create.before.
+        termsVersion: { type: 'string', required: false, input: true },
+        termsAcceptedAt: { type: 'date', required: false, input: false },
       },
       deleteUser: { enabled: false },
       // Rectification (Art. 16): the old address confirms, the new one is verified before it counts.
@@ -160,14 +167,21 @@ export function createAuth(d: AuthDeps) {
     databaseHooks: {
       user: {
         create: {
-          before: async (user) => {
+          before: async (user, ctx) => {
             const email = user.email.toLowerCase()
             // Without verification the bootstrap role is granted at sign-up (dev/closed deployments only).
             const bootstrap = !verificationOn && config.adminEmails.includes(email)
-            return { data: { ...user, email, ...(bootstrap ? { role: 'admin' } : {}) } }
+            // Self sign-up must accept the current terms; the server records version and time.
+            const selfSignup = ctx?.path === '/sign-up/email'
+            if (selfSignup && user.termsVersion !== LEGAL.termsVersion) {
+              throw new APIError('BAD_REQUEST', { message: 'Please accept the current terms of service and privacy policy' })
+            }
+            const terms = selfSignup ? { termsVersion: LEGAL.termsVersion, termsAcceptedAt: new Date() } : { termsVersion: null, termsAcceptedAt: null }
+            return { data: { ...user, email, ...terms, ...(bootstrap ? { role: 'admin' } : {}) } }
           },
           after: async (user) => {
-            await audit(db, { actorId: user.id, actorEmail: user.email, action: 'auth.signup', targetType: 'user', targetId: user.id }, log)
+            const termsVersion = (user as { termsVersion?: string | null }).termsVersion ?? null
+            await audit(db, { actorId: user.id, actorEmail: user.email, action: 'auth.signup', targetType: 'user', targetId: user.id, meta: { termsVersion } }, log)
             // Invitations are only bound to *verified* addresses — never to a merely claimed e-mail.
             if (user.emailVerified) await acceptPendingInvites(db, events, user.id, user.email)
           },
@@ -185,6 +199,20 @@ export function createAuth(d: AuthDeps) {
     },
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
+        if (pow && ctx.path === '/sign-up/email' && !pow.verify(ctx.headers?.get('x-captcha'))) {
+          throw new APIError('BAD_REQUEST', { message: 'The sign-up check failed — reload the page and try again' })
+        }
+        if (ctx.path === '/sign-up/email' || ctx.path === '/change-email') {
+          const body = (ctx.body ?? {}) as { email?: unknown; newEmail?: unknown }
+          const email = ctx.path === '/sign-up/email' ? body.email : body.newEmail
+          if (typeof email === 'string' && isBlockedEmail(email, config.blockedEmailDomains)) {
+            throw new APIError('BAD_REQUEST', { message: 'Please use a permanent e-mail address — disposable addresses are not accepted' })
+          }
+        }
+        // The accepted terms version is only written at sign-up and via POST /api/me/terms.
+        if (ctx.path === '/update-user' && ctx.body && typeof ctx.body === 'object' && 'termsVersion' in ctx.body) {
+          throw new APIError('BAD_REQUEST', { message: 'termsVersion cannot be changed here' })
+        }
         if (!IMPERSONATION_BLOCKED.has(ctx.path)) return
         const s = await getSessionFromCtx(ctx).catch(() => null)
         if (s?.session && (s.session as { impersonatedBy?: string | null }).impersonatedBy) {

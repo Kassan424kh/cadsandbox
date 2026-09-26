@@ -1,7 +1,7 @@
 // Projects: list/create/get/update, trash/restore/permanent delete, duplicate, thumbnails, org listing.
 import type { Hono } from 'hono'
 import { and, eq } from 'drizzle-orm'
-import { docNames, LIMITS, schemas, type ProjectDTO } from '@cadsandbox/shared'
+import { can, docNames, LIMITS, schemas, type ProjectDTO } from '@cadsandbox/shared'
 import { blobs, orgProjectGrants, projects, stars } from '../db/schema'
 import { newId, sha256Hex } from '../lib/crypto'
 import { badRequest, conflict, forbidden, notFound, quotaExceeded } from '../lib/errors'
@@ -10,7 +10,7 @@ import { jsonLimit, KB, register } from '../http/router'
 import { isStaff } from '../services/access'
 import { audit } from '../services/audit'
 import { membershipRole } from '../services/orgs'
-import { accessDTO, countOwnedProjects, duplicateProject, hardDeleteProjects, listProjects, projectDTO, refreshProjectSize, storageUsage, touchRecent } from '../services/projects'
+import { accessDTO, countOwnedProjects, duplicateProject, hardDeleteProjects, listProjects, projectDTO, refreshProjectSize, storageUsage, touchRecent, writeBlock } from '../services/projects'
 import { readLimited } from '../services/uploads'
 import { systemRole } from '../services/users'
 import { assertProjectFolder } from './folders'
@@ -79,7 +79,12 @@ export function projectRoutes(app: Hono<AppEnv>): void {
     if (uid && !a.project.deletedAt && a.via !== 'support' && !impersonating) await touchRecent(d.db, uid, a.project.id)
     const dto = await accessDTO(d.db, a, uid)
     // Impersonation: content is at most readable (with the user's support grant), never writable.
-    return c.json(impersonating ? { ...forImpersonation(c, dto), role: 'viewer' as const } : dto)
+    if (impersonating) return c.json({ ...forImpersonation(c, dto), role: 'viewer' as const })
+    // Editors learn up front when edits are paused for everyone (storage full / design too large).
+    if (can(a.role, 'edit') && !a.project.deletedAt) {
+      dto.writeBlock = await writeBlock(d.db, a.project, { storageQuotaBytes: d.config.storageQuotaBytes, maxDocBytes: d.config.collabMaxDocBytes })
+    }
+    return c.json(dto)
   })
 
   register(app, 'updateProject', jsonLimit(16 * KB), async (c) => {
@@ -135,6 +140,8 @@ export function projectRoutes(app: Hono<AppEnv>): void {
     const d = c.get('deps')
     const a = await projectAccess(c, param(c, 'id'), 'manage', { includeDeleted: true, metadata: true })
     if (!a.project.deletedAt) return c.json(await accessDTO(d.db, a, s.user.id))
+    // Trashed projects don't count toward the project limit — restoring one does.
+    await assertProjectQuota(c, a.project.ownerId)
     const [row] = await d.db.update(projects).set({ deletedAt: null, updatedAt: new Date() }).where(eq(projects.id, a.project.id)).returning()
     await audit(d.db, { actorId: s.user.id, actorEmail: s.user.email, action: 'project.restore', targetType: 'project', targetId: a.project.id, ip: c.get('ip') }, d.log)
     return c.json(await accessDTO(d.db, { ...a, project: row! }, s.user.id))

@@ -1,10 +1,11 @@
 // Unauthenticated endpoints: health, public config, active announcements.
 import type { Hono } from 'hono'
 import { and, asc, gt, isNull, lte, or, sql } from 'drizzle-orm'
-import { BRAND, LIMITS, type AnnouncementDTO, type PublicConfigDTO } from '@cadsandbox/shared'
+import { BRAND, LIMITS, schemas, type AnnouncementDTO, type PublicConfigDTO } from '@cadsandbox/shared'
 import { announcements } from '../db/schema'
-import type { AppEnv } from '../http/context'
-import { register } from '../http/router'
+import { jsonBody, limit, type AppEnv } from '../http/context'
+import { redactUrl } from '../log'
+import { jsonLimit, KB, register } from '../http/router'
 import { lifecycle } from '../lifecycle'
 
 export const announcementDTO = (a: typeof announcements.$inferSelect): AnnouncementDTO => ({
@@ -30,6 +31,31 @@ export function publicRoutes(app: Hono<AppEnv>): void {
     }
     c.header('Cache-Control', 'no-store')
     return c.json({ ok: db, version: d.config.version, db: db ? 'up' : 'down' }, db ? 200 : 503)
+  })
+
+  // Browser errors → error tracker (the page itself never contacts a third party).
+  register(app, 'clientError', jsonLimit(16 * KB), async (c) => {
+    const d = c.get('deps')
+    limit(c, 'clientErrorsPerIp', c.get('ipHash'))
+    const input = await jsonBody(c, schemas.clientError)
+    d.errorReporter?.report({
+      platform: 'javascript',
+      message: input.message,
+      type: input.type,
+      stack: input.stack,
+      tags: { path: redactUrl(input.path), ...(input.release ? { client: input.release } : {}) },
+      extra: { userAgent: (c.req.header('user-agent') ?? '').slice(0, 300) },
+    })
+    return c.body(null, 204)
+  })
+
+  // Proof-of-work challenge for the sign-up form (see auth/captcha.ts).
+  register(app, 'signupChallenge', (c) => {
+    const d = c.get('deps')
+    if (!d.pow) return c.json({ error: { code: 'not_found', message: 'Not enabled' } }, 404)
+    limit(c, 'authPerIp', c.get('ipHash'))
+    c.header('Cache-Control', 'no-store')
+    return c.json(d.pow.issue())
   })
 
   register(app, 'config', (c) => {

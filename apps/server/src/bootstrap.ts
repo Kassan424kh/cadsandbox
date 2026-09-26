@@ -14,6 +14,8 @@ import { createMailer, type Mailer } from './mail/mailer'
 import { audit, AuditThrottle } from './services/audit'
 import { AccessEvents } from './services/events'
 import { ShareGrants } from './services/share-grants'
+import { ProofOfWork } from './auth/captcha'
+import { ErrorReporter, reportFromLog } from './lib/error-reports'
 import { ensureBootstrapAdmin } from './services/users'
 import { createBlobStore } from './storage'
 
@@ -23,7 +25,14 @@ export interface Runtime {
 }
 
 export async function createRuntime(config: Config, overrides: { mailer?: Mailer; log?: Logger } = {}): Promise<Runtime> {
-  const log = overrides.log ?? createLogger(config.logLevel, config.isProd)
+  const errorReporter = config.errorReports.dsn ? new ErrorReporter(config.errorReports.dsn, { release: config.version, environment: config.errorReports.environment }) : null
+  const onError = errorReporter
+    ? (args: unknown[]) => {
+        const report = reportFromLog(args)
+        if (report) errorReporter.report(report)
+      }
+    : undefined
+  const log = overrides.log ?? createLogger(config.logLevel, config.isProd, onError)
   const database = await openDatabase({
     databaseUrl: config.databaseUrl,
     poolMax: config.databasePoolMax,
@@ -36,14 +45,15 @@ export async function createRuntime(config: Config, overrides: { mailer?: Mailer
   const blobs = createBlobStore(config, ring)
   const mailer = overrides.mailer ?? createMailer(config, log)
   const events = new AccessEvents()
-  const auth = createAuth({ config, db, log, mailer, events })
+  const pow = config.features.signupCaptcha ? new ProofOfWork(config.authSecret, config.signupCaptchaDifficulty) : null
+  const auth = createAuth({ config, db, log, mailer, events, pow })
   const limiter = new RateLimiter(config.rateLimit)
   const ipHasher = new IpHasher()
   const proxy = new ProxyTrust(config.trustProxy, config.trustedProxies)
   const auditThrottle = new AuditThrottle()
   const grants = new ShareGrants(config.authSecret)
   const collab = createCollab({ config, log, db, auth, ring, events, limiter, ipHasher, proxy, auditThrottle, grants })
-  const deps: Deps = { config, log, db, dbDriver: database.driver, auth, blobs, ring, mailer, events, collab, ipHasher, proxy, limiter, auditThrottle, grants }
+  const deps: Deps = { config, log, db, dbDriver: database.driver, auth, blobs, ring, mailer, events, collab, ipHasher, proxy, limiter, auditThrottle, grants, pow, errorReporter }
 
   // ADMIN_EMAILS: promote listed accounts that are already verified (others on verification).
   for (const email of config.adminEmails) {

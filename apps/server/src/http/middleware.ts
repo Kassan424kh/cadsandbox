@@ -154,6 +154,6 @@ export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
   // Hono's own HTTPExceptions (e.g. body-limit) carry a status.
   if (e.status === 413) return c.json(errorJson('payload_too_large', 'Payload too large'), 413)
   const log = c.get('log') ?? c.get('deps')?.log
-  log?.error({ err: { message: e.message, name: e.name, stack: e.stack } }, 'unhandled error')
+  log?.error({ err: { message: e.message, name: e.name, stack: e.stack }, method: c.req.method, route: c.req.routePath }, 'unhandled error')
   return c.json(errorJson('internal', 'Internal server error'), 500)
 }

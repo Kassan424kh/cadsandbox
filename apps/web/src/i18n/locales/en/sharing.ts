@@ -51,6 +51,7 @@ export const sharing = {
   'share.title': 'Share “{name}”',
   'share.uses.one': '{count} use',
   'share.uses.other': '{count} uses',
+  'share.viaLink': 'via share link',
   'share.visibility.link': 'Link',
   'share.visibility.linkDesc': 'Anyone with a share link can open it with the link’s role.',
   'share.visibility.ownerOnly': 'Only the owner can change general access.',

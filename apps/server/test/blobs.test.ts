@@ -95,6 +95,19 @@ describe('blobs (plaintext storage)', () => {
     const r = await s.json('PUT', `/api/projects/${pid}/blobs/${'a'.repeat(64)}`, { cookie: owner.cookie, body: 'x', headers: { 'content-length': String(300 * 1024 * 1024) } })
     expect([413, 400]).toContain(r.status)
   })
+
+  it('refuses uploads that do not declare their size', async () => {
+    const data = randomBytes(64)
+    const body = new ReadableStream<Uint8Array>({
+      start(ctrl) {
+        ctrl.enqueue(new Uint8Array(data))
+        ctrl.close()
+      },
+    })
+    const r = await s.req('PUT', `/api/projects/${pid}/blobs/${await sha256(data)}`, { cookie: owner.cookie, body, headers: {} })
+    expect(r.status).toBe(400)
+    expect(((await r.json()) as { error: { message: string } }).error.message).toMatch(/Content-Length/)
+  })
 })
 
 describe('blobs (encrypted at rest)', () => {

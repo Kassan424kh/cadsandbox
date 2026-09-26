@@ -1,8 +1,8 @@
 // User helpers: DTO mapping, pending-invite acceptance, admin bootstrap, GDPR hard delete.
-import { and, asc, eq, gt, inArray, ne, or, sql } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, isNotNull, ne, or, sql } from 'drizzle-orm'
 import type { SystemRole, UserDTO } from '@cadsandbox/shared'
 import type { Db } from '../db/client'
-import { auditLog, invitation, member, organization, projectInvites, projectMembers, projects, user, verification } from '../db/schema'
+import { auditLog, collections, folders, invitation, member, organization, projectInvites, projectMembers, projects, user, verification } from '../db/schema'
 import { newId } from '../lib/crypto'
 import type { Logger } from '../log'
 import type { AccessEvents } from './events'
@@ -79,7 +79,8 @@ export async function ensureBootstrapAdmin(db: Db, adminEmails: string[], u: { i
  * GDPR Art. 17 hard delete. Removes the account and everything it owns (FK cascades cover sessions,
  * accounts, 2FA, passkeys, memberships, folders, projects → collab docs, versions, links, members,
  * blob refs; collections, assets, tickets). Unreferenced blobs are removed by the GC job. Audit entries
- * about the user are kept for security but anonymised.
+ * about the user are kept for security but anonymised. Projects, folders and collections the user
+ * created inside an organisation belong to the organisation: they pass to its owner instead.
  */
 export async function hardDeleteUser(db: Db, events: AccessEvents, userId: string, log: Logger): Promise<{ projects: string[] } | null> {
   const [u] = await db.select().from(user).where(eq(user.id, userId)).limit(1)
@@ -102,6 +103,30 @@ export async function hardDeleteUser(db: Db, events: AccessEvents, userId: strin
       if (others.some((o) => o.role === 'owner')) continue
       const heir = others.find((o) => o.role === 'admin') ?? others[0]!
       await tx.update(member).set({ role: 'owner' }).where(eq(member.id, heir.id))
+    }
+    // Organisation content goes to the organisation's owner (empty organisations were deleted above,
+    // which detached their projects, so those go with the account).
+    const orgIds = new Set<string>()
+    for (const table of [projects, folders, collections]) {
+      const rows = await tx.selectDistinct({ orgId: table.orgId }).from(table).where(and(eq(table.ownerId, userId), isNotNull(table.orgId)))
+      for (const r of rows) if (r.orgId) orgIds.add(r.orgId)
+    }
+    for (const orgId of orgIds) {
+      const [owner] = await tx
+        .select({ userId: member.userId })
+        .from(member)
+        .where(and(eq(member.organizationId, orgId), eq(member.role, 'owner'), ne(member.userId, userId)))
+        .orderBy(asc(member.createdAt))
+        .limit(1)
+      if (!owner) continue
+      const moved = await tx
+        .update(projects)
+        .set({ ownerId: owner.userId })
+        .where(and(eq(projects.ownerId, userId), eq(projects.orgId, orgId)))
+        .returning({ id: projects.id })
+      for (const p of moved) affected.add(p.id)
+      await tx.update(folders).set({ ownerId: owner.userId }).where(and(eq(folders.ownerId, userId), eq(folders.orgId, orgId)))
+      await tx.update(collections).set({ ownerId: owner.userId }).where(and(eq(collections.ownerId, userId), eq(collections.orgId, orgId)))
     }
     const ownedProjects = await tx.select({ id: projects.id }).from(projects).where(eq(projects.ownerId, userId))
     const memberOf = await tx.select({ projectId: projectMembers.projectId }).from(projectMembers).where(eq(projectMembers.userId, userId))

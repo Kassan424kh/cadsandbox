@@ -1,10 +1,10 @@
 // /api/me — profile, GDPR export (Art. 15/20), account deletion with grace period (Art. 17).
 import type { Hono } from 'hono'
 import { eq } from 'drizzle-orm'
-import { LIMITS, schemas, type MeDTO } from '@cadsandbox/shared'
+import { LEGAL, LIMITS, schemas, type MeDTO } from '@cadsandbox/shared'
 import { deletionRequests, user } from '../db/schema'
 import { badRequest } from '../lib/errors'
-import { jsonBody, limit, requireAuth, requireRealUser, type AppEnv } from '../http/context'
+import { jsonBody, limit, requireAuth, requireRealUser, type AppEnv, type Ctx } from '../http/context'
 import { jsonLimit, KB, register } from '../http/router'
 import { pickLocale } from '../mail/templates'
 import { audit } from '../services/audit'
@@ -16,24 +16,41 @@ import { toUserDTO } from '../services/users'
 const DATA_IMAGE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/
 const LOCALE = /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/
 
+async function meDTO(c: Ctx, userId: string): Promise<MeDTO | null> {
+  const d = c.get('deps')
+  const [u] = await d.db.select().from(user).where(eq(user.id, userId)).limit(1)
+  if (!u) return null
+  const [orgs, used, [del]] = await Promise.all([
+    orgsOfUser(d.db, u.id),
+    storageUsage(d.db, u.id),
+    d.db.select().from(deletionRequests).where(eq(deletionRequests.userId, u.id)).limit(1),
+  ])
+  return {
+    user: toUserDTO(u),
+    orgs,
+    storage: { usedBytes: used, quotaBytes: d.config.storageQuotaBytes },
+    deletionScheduledAt: del ? del.executeAfter.toISOString() : null,
+    termsAcceptedVersion: u.termsVersion ?? null,
+  }
+}
+
 export function meRoutes(app: Hono<AppEnv>): void {
   register(app, 'me', async (c) => {
     const s = requireAuth(c)
-    const d = c.get('deps')
-    const [u] = await d.db.select().from(user).where(eq(user.id, s.user.id)).limit(1)
-    if (!u) return c.json({ error: { code: 'unauthorized', message: 'Authentication required' } }, 401)
-    const [orgs, used, [del]] = await Promise.all([
-      orgsOfUser(d.db, u.id),
-      storageUsage(d.db, u.id),
-      d.db.select().from(deletionRequests).where(eq(deletionRequests.userId, u.id)).limit(1),
-    ])
-    const body: MeDTO = {
-      user: toUserDTO(u),
-      orgs,
-      storage: { usedBytes: used, quotaBytes: d.config.storageQuotaBytes },
-      deletionScheduledAt: del ? del.executeAfter.toISOString() : null,
-    }
+    const body = await meDTO(c, s.user.id)
+    if (!body) return c.json({ error: { code: 'unauthorized', message: 'Authentication required' } }, 401)
     return c.json(body)
+  })
+
+  // Accepting changed terms is a declaration of the user themselves — never while impersonated.
+  register(app, 'acceptTerms', jsonLimit(1 * KB), async (c) => {
+    const s = requireRealUser(c)
+    const d = c.get('deps')
+    const { version } = await jsonBody(c, schemas.acceptTerms)
+    if (version !== LEGAL.termsVersion) throw badRequest('These are not the current terms — reload and try again')
+    await d.db.update(user).set({ termsVersion: version, termsAcceptedAt: new Date(), updatedAt: new Date() }).where(eq(user.id, s.user.id))
+    await audit(d.db, { actorId: s.user.id, actorEmail: s.user.email, action: 'account.terms.accept', targetType: 'user', targetId: s.user.id, ip: c.get('ip'), meta: { termsVersion: version } }, d.log)
+    return c.json(await meDTO(c, s.user.id))
   })
 
   register(app, 'updateMe', jsonLimit(300 * KB), async (c) => {

@@ -7,7 +7,7 @@ import { and, eq, sql } from 'drizzle-orm'
 import { LIMITS } from '@cadsandbox/shared'
 import { rowsOf } from '../db/client'
 import { blobs, projectBlobs, userAssets } from '../db/schema'
-import { notFound, payloadTooLarge } from '../lib/errors'
+import { badRequest, notFound, payloadTooLarge, rateLimited } from '../lib/errors'
 import { limit, param, projectAccess, requireAuth, requireRealUser, type AppEnv, type Ctx } from '../http/context'
 import { register } from '../http/router'
 import { refreshProjectSize } from '../services/projects'
@@ -40,11 +40,45 @@ async function serveBlob(c: Ctx, b: BlobRow): Promise<Response> {
   return new Response(Readable.toWeb(stream) as unknown as ReadableStream, { status: 200, headers: { ...headers, 'Content-Length': String(b.size) } })
 }
 
-function declaredLength(c: Ctx): number | null {
-  const v = c.req.header('content-length')
-  if (!v) return null
-  const n = Number(v)
-  return Number.isFinite(n) && n >= 0 ? n : null
+/** Uploads must declare their size, so quota and size limits are checked before any byte is stored. */
+function declaredLength(c: Ctx): number {
+  const n = Number(c.req.header('content-length') ?? NaN)
+  if (!Number.isInteger(n) || n < 0) throw badRequest('Content-Length header required')
+  if (n > LIMITS.maxBlobBytes) throw payloadTooLarge(`Files are limited to ${LIMITS.maxBlobBytes} bytes`)
+  return n
+}
+
+/** Uploads in flight per user (this instance) — bounds temp-disk use by streams that end up rejected. */
+const uploadsInFlight = new Map<string, number>()
+const MAX_UPLOADS_IN_FLIGHT = 4
+
+async function withUploadSlot<T>(userId: string, run: () => Promise<T>): Promise<T> {
+  const n = uploadsInFlight.get(userId) ?? 0
+  if (n >= MAX_UPLOADS_IN_FLIGHT) throw rateLimited(2)
+  uploadsInFlight.set(userId, n + 1)
+  try {
+    return await run()
+  } finally {
+    const left = (uploadsInFlight.get(userId) ?? 1) - 1
+    if (left > 0) uploadsInFlight.set(userId, left)
+    else uploadsInFlight.delete(userId)
+  }
+}
+
+const HOUR = 3_600_000
+/** Bytes per project and hour served to visitors — public projects must not become free file hosting. */
+const visitorEgress = new Map<string, { start: number; bytes: number }>()
+
+function chargeVisitorEgress(projectId: string, bytes: number, budget: number): void {
+  const now = Date.now()
+  let e = visitorEgress.get(projectId)
+  if (!e || now - e.start >= HOUR) {
+    e = { start: now, bytes: 0 }
+    visitorEgress.set(projectId, e)
+  }
+  if (e.bytes + bytes > budget) throw rateLimited((e.start + HOUR - now) / 1000)
+  e.bytes += bytes
+  if (visitorEgress.size > 10_000) for (const [k, v] of visitorEgress) if (now - v.start >= HOUR) visitorEgress.delete(k)
 }
 
 async function projectBlob(c: Ctx): Promise<Response> {
@@ -58,6 +92,8 @@ async function projectBlob(c: Ctx): Promise<Response> {
     .where(and(eq(projectBlobs.projectId, a.project.id), eq(projectBlobs.hash, hash)))
     .limit(1)
   if (!b) throw notFound('Blob not found')
+  const visitor = a.via === 'public' || (a.via === 'link' && !c.get('session'))
+  if (visitor && c.req.method === 'GET' && c.req.header('if-none-match') !== `"${b.b.hash}"`) chargeVisitorEgress(a.project.id, b.b.size, d.config.visitorEgressBytesPerHour)
   return serveBlob(c, b.b)
 }
 
@@ -92,9 +128,8 @@ export function blobRoutes(app: Hono<AppEnv>): void {
       .limit(1)
     if (ref) return c.json({ hash, size: ref.b.size, mime: ref.b.mime }, 200)
     const len = declaredLength(c)
-    if (len !== null && len > LIMITS.maxBlobBytes) throw payloadTooLarge(`Files are limited to ${LIMITS.maxBlobBytes} bytes`)
-    await assertQuota(d.db, a.project.ownerId, d.config.storageQuotaBytes, len ?? 0)
-    const received = await receiveBlob(d.blobs, c.req.raw.body, hash, LIMITS.maxBlobBytes)
+    await assertQuota(d.db, a.project.ownerId, d.config.storageQuotaBytes, len)
+    const received = await withUploadSlot(s.user.id, () => receiveBlob(d.blobs, c.req.raw.body, hash, Math.min(len, LIMITS.maxBlobBytes)))
     await commitBlob(d.db, d.blobs, received, a.project.ownerId, d.config.storageQuotaBytes, async (tx) => {
       await tx.insert(projectBlobs).values({ projectId: a.project.id, hash }).onConflictDoNothing()
     })
@@ -127,9 +162,8 @@ export function blobRoutes(app: Hono<AppEnv>): void {
       .limit(1)
     if (ref) return c.json({ hash, size: ref.b.size, mime: ref.b.mime }, 200)
     const len = declaredLength(c)
-    if (len !== null && len > LIMITS.maxBlobBytes) throw payloadTooLarge(`Files are limited to ${LIMITS.maxBlobBytes} bytes`)
-    await assertQuota(d.db, s.user.id, d.config.storageQuotaBytes, len ?? 0)
-    const received = await receiveBlob(d.blobs, c.req.raw.body, hash, LIMITS.maxBlobBytes)
+    await assertQuota(d.db, s.user.id, d.config.storageQuotaBytes, len)
+    const received = await withUploadSlot(s.user.id, () => receiveBlob(d.blobs, c.req.raw.body, hash, Math.min(len, LIMITS.maxBlobBytes)))
     await commitBlob(d.db, d.blobs, received, s.user.id, d.config.storageQuotaBytes, async (tx) => {
       await tx.insert(userAssets).values({ userId: s.user.id, hash }).onConflictDoNothing()
     })

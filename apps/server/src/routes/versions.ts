@@ -2,12 +2,12 @@
 // connections, so connected clients see restores/comments immediately and Yjs history is preserved.
 import { createHash } from 'node:crypto'
 import type { Hono } from 'hono'
-import { and, eq } from 'drizzle-orm'
+import { and, count, eq } from 'drizzle-orm'
 import { docNames, schemas } from '@cadsandbox/shared'
 import type { CommentDef, CommentReply } from '@cadsandbox/doc'
 import { versions } from '../db/schema'
 import { newId } from '../lib/crypto'
-import { badRequest, notFound } from '../lib/errors'
+import { badRequest, conflict, notFound } from '../lib/errors'
 import { jsonBody, param, projectAccess, requireAuth, type AppEnv, type Ctx } from '../http/context'
 import { jsonLimit, KB, register } from '../http/router'
 import { addComment, addReply, restoreMapRoots, setResolved } from '../collab/ydoc'
@@ -40,6 +40,8 @@ async function requireDoc(c: Ctx, docName: string): Promise<void> {
   if (!(await c.get('deps').collab.getState(docName))) throw notFound('Document not found')
 }
 
+const MAX_NAMED_VERSIONS = 100
+
 export function versionRoutes(app: Hono<AppEnv>): void {
   register(app, 'listVersions', async (c) => {
     const d = c.get('deps')
@@ -55,6 +57,9 @@ export function versionRoutes(app: Hono<AppEnv>): void {
     const a = await projectAccess(c, param(c, 'id'), 'edit')
     const input = await jsonBody(c, schemas.createVersion)
     const docName = docOfProject(input.docName, a.project.id)
+    // Named versions are full snapshots that are never pruned automatically — keep them bounded.
+    const [named] = await d.db.select({ n: count() }).from(versions).where(and(eq(versions.docName, docName), eq(versions.auto, false)))
+    if (Number(named?.n ?? 0) >= MAX_NAMED_VERSIONS) throw conflict(`This file already has ${MAX_NAMED_VERSIONS} named versions — delete some first`)
     const state = await d.collab.getState(docName)
     if (!state) throw notFound('Document not found')
     const row = await createVersion(d.db, d.ring, { projectId: a.project.id, docName, name: input.name, auto: false, createdBy: s.user.id, state })

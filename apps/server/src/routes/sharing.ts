@@ -3,7 +3,7 @@
 import type { Hono } from 'hono'
 import { and, asc, eq, isNull, sql } from 'drizzle-orm'
 import { can, PROJECT_ROLE_RANK, schemas, type GrantRole, type OrgGrantDTO, type ProjectMemberDTO, type ProjectRole, type ShareLinkDTO } from '@cadsandbox/shared'
-import { organization, orgProjectGrants, projectInvites, projectMembers, projects, shareLinks, user } from '../db/schema'
+import { member, organization, orgProjectGrants, projectInvites, projectMembers, projects, shareLinks, user } from '../db/schema'
 import { hashSecret, hashToken, newId, randomToken, verifySecret } from '../lib/crypto'
 import { badRequest, forbidden, notFound, unauthorized } from '../lib/errors'
 import { maskEmail } from '../log'
@@ -35,6 +35,32 @@ async function shareAudit(c: Ctx, a: ProjectAccess, action: string, meta: Record
   d.events.projectChanged(a.project.id)
 }
 
+/**
+ * Sharing changes need the 'share' right from ownership, a direct membership or an organisation —
+ * never from a share link alone. Otherwise someone who joined through a link could grant themselves
+ * (or others) access that survives deleting the link or making the project private.
+ */
+async function requireShareWithoutLink(c: Ctx, a: ProjectAccess): Promise<void> {
+  if (a.via !== 'link') return
+  const d = c.get('deps')
+  const uid = c.get('session')?.user.id
+  if (uid) {
+    const [direct, viaOrg] = await Promise.all([
+      d.db
+        .select({ role: projectMembers.role })
+        .from(projectMembers)
+        .where(and(eq(projectMembers.projectId, a.project.id), eq(projectMembers.userId, uid), isNull(projectMembers.linkId))),
+      d.db
+        .select({ role: orgProjectGrants.role })
+        .from(orgProjectGrants)
+        .innerJoin(member, and(eq(member.organizationId, orgProjectGrants.orgId), eq(member.userId, uid)))
+        .where(eq(orgProjectGrants.projectId, a.project.id)),
+    ])
+    if ([...direct, ...viaOrg].some((r) => can(r.role, 'share'))) return
+  }
+  throw forbidden('Only the owner and people invited directly can change sharing')
+}
+
 export async function listMembersOf(c: Ctx, a: ProjectAccess): Promise<ProjectMemberDTO[]> {
   const d = c.get('deps')
   const showEmails = can(a.role, 'share')
@@ -52,11 +78,12 @@ export async function listMembersOf(c: Ctx, a: ProjectAccess): Promise<ProjectMe
     // Link memberships only count while the link is active.
     if (r.linkId && (a.project.visibility === 'private' || (r.expiresAt && r.expiresAt <= now))) continue
     const cur = byUser.get(r.userId)
-    if (cur && PROJECT_ROLE_RANK[cur.role] >= PROJECT_ROLE_RANK[r.role]) continue
-    byUser.set(r.userId, { userId: r.userId, email: showEmails ? r.email : (maskEmail(r.email) ?? ''), name: r.name, image: r.image ?? null, role: r.role, addedAt: (cur?.addedAt ?? r.createdAt.toISOString()) })
+    // Highest role wins; on a tie a direct grant beats a link.
+    if (cur && (PROJECT_ROLE_RANK[cur.role] > PROJECT_ROLE_RANK[r.role] || (PROJECT_ROLE_RANK[cur.role] === PROJECT_ROLE_RANK[r.role] && (!cur.viaLink || r.linkId)))) continue
+    byUser.set(r.userId, { userId: r.userId, email: showEmails ? r.email : (maskEmail(r.email) ?? ''), name: r.name, image: r.image ?? null, role: r.role, viaLink: !!r.linkId, addedAt: (cur?.addedAt ?? r.createdAt.toISOString()) })
   }
   const list = [...byUser.values()]
-  if (owner) list.unshift({ userId: owner.id, email: showEmails ? owner.email : (maskEmail(owner.email) ?? ''), name: owner.name, image: owner.image ?? null, role: 'owner', addedAt: a.project.createdAt.toISOString() })
+  if (owner) list.unshift({ userId: owner.id, email: showEmails ? owner.email : (maskEmail(owner.email) ?? ''), name: owner.name, image: owner.image ?? null, role: 'owner', viaLink: false, addedAt: a.project.createdAt.toISOString() })
   return list
 }
 
@@ -74,11 +101,13 @@ export function sharingRoutes(app: Hono<AppEnv>): void {
     const s = requireRealUser(c, SHARING_BLOCKED)
     const d = c.get('deps')
     const a = await projectAccess(c, param(c, 'id'), 'share', { metadata: true })
+    await requireShareWithoutLink(c, a)
     limit(c, 'invitePerUser', s.user.id)
     const input = await jsonBody(c, schemas.addMember)
     const email = input.email.trim().toLowerCase()
     const [target] = await d.db.select().from(user).where(eq(user.email, email)).limit(1)
     if (target?.id === a.project.ownerId) throw badRequest('This user owns the project')
+    if (target?.id === s.user.id) throw badRequest('You already have access')
     const locale = pickLocale((s.user as { locale?: string }).locale)
     const url = projectUrl(c, a.project.id)
     if (target && target.emailVerified) {
@@ -105,9 +134,11 @@ export function sharingRoutes(app: Hono<AppEnv>): void {
     const s = requireRealUser(c, SHARING_BLOCKED)
     const d = c.get('deps')
     const a = await projectAccess(c, param(c, 'id'), 'share', { metadata: true })
+    await requireShareWithoutLink(c, a)
     const userId = param(c, 'userId')
     const { role } = await jsonBody(c, schemas.updateMember)
     if (userId === a.project.ownerId) throw badRequest("The owner's role cannot be changed")
+    if (userId === s.user.id) throw badRequest('You cannot change your own role')
     const existing = await d.db.select({ id: projectMembers.id }).from(projectMembers).where(and(eq(projectMembers.projectId, a.project.id), eq(projectMembers.userId, userId))).limit(1)
     if (!existing.length) throw notFound('Member not found')
     await d.db
@@ -128,6 +159,7 @@ export function sharingRoutes(app: Hono<AppEnv>): void {
     const userId = param(c, 'userId')
     // Members may always leave; removing others requires share permission.
     const a = await projectAccess(c, id, userId === s.user.id ? 'view' : 'share', { metadata: true })
+    if (userId !== s.user.id) await requireShareWithoutLink(c, a)
     if (userId === a.project.ownerId) throw badRequest('The owner cannot be removed')
     const removed = await d.db.delete(projectMembers).where(and(eq(projectMembers.projectId, a.project.id), eq(projectMembers.userId, userId))).returning({ id: projectMembers.id })
     if (!removed.length) throw notFound('Member not found')
@@ -148,6 +180,7 @@ export function sharingRoutes(app: Hono<AppEnv>): void {
     const s = requireRealUser(c, SHARING_BLOCKED)
     const d = c.get('deps')
     const a = await projectAccess(c, param(c, 'id'), 'share', { metadata: true })
+    await requireShareWithoutLink(c, a)
     const input = await jsonBody(c, schemas.createLink)
     const expiresAt = input.expiresAt ? new Date(input.expiresAt) : null
     if (expiresAt && expiresAt.getTime() <= Date.now()) throw badRequest('expiresAt must be in the future')
@@ -168,6 +201,7 @@ export function sharingRoutes(app: Hono<AppEnv>): void {
     requireRealUser(c, SHARING_BLOCKED)
     const d = c.get('deps')
     const a = await projectAccess(c, param(c, 'id'), 'share', { metadata: true })
+    await requireShareWithoutLink(c, a)
     const linkId = param(c, 'linkId')
     const removed = await d.db.delete(shareLinks).where(and(eq(shareLinks.id, linkId), eq(shareLinks.projectId, a.project.id))).returning({ id: shareLinks.id })
     if (!removed.length) throw notFound('Link not found')
@@ -235,6 +269,7 @@ export function sharingRoutes(app: Hono<AppEnv>): void {
     const s = requireRealUser(c, SHARING_BLOCKED)
     const d = c.get('deps')
     const a = await projectAccess(c, param(c, 'id'), 'share', { metadata: true })
+    await requireShareWithoutLink(c, a)
     const orgId = param(c, 'orgId')
     const { role } = await jsonBody(c, schemas.setOrgGrant)
     // You can only share into organisations you belong to.
@@ -254,6 +289,7 @@ export function sharingRoutes(app: Hono<AppEnv>): void {
     requireRealUser(c, SHARING_BLOCKED)
     const d = c.get('deps')
     const a = await projectAccess(c, param(c, 'id'), 'share', { metadata: true })
+    await requireShareWithoutLink(c, a)
     const orgId = param(c, 'orgId')
     const removed = await d.db.delete(orgProjectGrants).where(and(eq(orgProjectGrants.projectId, a.project.id), eq(orgProjectGrants.orgId, orgId))).returning({ orgId: orgProjectGrants.orgId })
     if (!removed.length) throw notFound('Grant not found')

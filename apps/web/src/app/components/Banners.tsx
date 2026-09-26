@@ -4,7 +4,7 @@ import { Link } from 'react-router'
 import { AlertTriangle, CloudOff, Info, ShieldAlert, X } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button, cx, toast } from '../../ui'
-import { formatDate, useT } from '../../i18n'
+import { formatBytes, formatDate, useT } from '../../i18n'
 import { useAuth } from '../../data/auth/AuthProvider'
 import { authClient, unwrap } from '../../data/auth/client'
 import { useAnnouncements } from '../../data/queries'
@@ -105,6 +105,25 @@ export function OfflineBanner() {
         {online
           ? t('banner.serverOffline', 'The CadSandbox server is unreachable. You can keep working — changes are saved on this device and sync later.')
           : t('banner.offline', 'You are offline. Keep working — changes are saved on this device and sync when you are back online.')}
+      </p>
+    </div>
+  )
+}
+
+/** Out of storage: uploads fail and the user's projects turn read-only until space is freed. */
+export function StorageBanner() {
+  const t = useT()
+  const auth = useAuth()
+  const st = auth.me?.storage
+  if (!st || st.quotaBytes <= 0 || st.usedBytes < st.quotaBytes) return null
+  return (
+    <div className={cx(s.banner, s.warning)} role="alert">
+      <AlertTriangle size={16} aria-hidden="true" />
+      <p>
+        {t('banner.storageFull', 'Your storage is full ({used} of {quota}), so your projects are read-only. Delete files or projects you no longer need to keep editing.', {
+          used: formatBytes(st.usedBytes),
+          quota: formatBytes(st.quotaBytes),
+        })}
       </p>
     </div>
   )

@@ -88,7 +88,10 @@ export function PeoplePanel({ projectId, role, ownerName }: { projectId: string;
                   {m.name || m.email}
                   {m.userId === auth.user?.id && ` (${t('share.you', 'you')})`}
                 </strong>
-                <span>{m.email}</span>
+                <span>
+                  {m.email}
+                  {m.viaLink && ` · ${t('share.viaLink', 'via share link')}`}
+                </span>
               </div>
               {m.role === 'owner' ? (
                 <Badge tone="accent">{t('share.role.owner', ROLE_LABEL.owner)}</Badge>

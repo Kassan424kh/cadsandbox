@@ -1,6 +1,6 @@
 // Top chrome: Back + project name menu (left), mode pill (center), presence/share/export (right).
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeft, Building, ChevronDown, CircleQuestionMark, Clock, Copy, Download, FilePlus, Files, Keyboard, Monitor, Moon, MousePointer2, PenLine, Plus, Ruler, Settings2, Share2, Sun, Upload, Wrench } from 'lucide-react'
+import { ArrowLeft, Building, ChevronDown, CircleQuestionMark, Clock, Copy, Download, FilePlus, Files, Keyboard, Monitor, Moon, MousePointer2, PenLine, Plus, Ruler, Scale, Settings2, Share2, Sun, Upload, Wrench } from 'lucide-react'
 import { useT } from '../../i18n'
 import {
   AvatarStack,
@@ -29,6 +29,7 @@ import {
   useTheme,
 } from '../../ui'
 import { useEditorCtx, useEditorState, useDocSelector, onMeta } from '../EditorContext'
+import { writeBlockMessage } from '../writeBlock'
 import { toolMode } from '../engine/tools'
 import { useActions } from '../commands/actions'
 import { EXPORT_FORMATS } from '../io/formats'
@@ -41,7 +42,7 @@ import { AddMenu, AnnotateMenu, BuildMenu, DrawMenu, ModifyMenu } from './ToolMe
 // ------------------------------------------------------------------ left: back + name
 export function TopLeft() {
   const t = useT()
-  const { onExit, doc, editor, readOnly, session, fileId, onOpenFile } = useEditorCtx()
+  const { onExit, doc, editor, readOnly, viewOnlyOnDevice, session, fileId, onOpenFile } = useEditorCtx()
   const name = useDocSelector((d) => d.meta.name, onMeta)
   const [editing, setEditing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -101,7 +102,7 @@ export function TopLeft() {
           </span>
         )}
         {readOnly && (
-          <Badge tone="outline" className={styles.readOnlyBadge}>
+          <Badge tone="outline" className={styles.readOnlyBadge} title={viewOnlyOnDevice ? t('editor.viewOnlyDevice', 'Editing needs a larger screen') : session.writeBlock ? writeBlockMessage(t, session.writeBlock, session.role === 'owner') : undefined}>
             {t('editor.viewOnly', 'View only')}
           </Badge>
         )}
@@ -190,6 +191,9 @@ export function TopLeft() {
             <DropdownMenuItem icon={<CircleQuestionMark />} onSelect={() => ui.openDialog('support')}>
               {t('menu.project.help', 'Get help')}
             </DropdownMenuItem>
+            <DropdownMenuItem icon={<Scale />} onSelect={() => window.open('/legal/imprint', '_blank', 'noopener,noreferrer')}>
+              {t('menu.project.legal', 'Imprint & privacy')}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -276,7 +280,7 @@ export function SyncDot({ className }: { className?: string }) {
 
 export function TopRight() {
   const t = useT()
-  const { editor, session, readOnly, onOpenFile } = useEditorCtx()
+  const { editor, session, readOnly, onOpenFile, engineAvailable } = useEditorCtx()
   const ui = useUiStore()
   const remote = useEditorState((s) => s.remoteUsers)
   const following = useEditorState((s) => s.following)
@@ -335,19 +339,19 @@ export function TopRight() {
                 )}
                 <DropdownMenuLabel>{t('menu.io.export3d', '3D')}</DropdownMenuLabel>
                 {EXPORT_FORMATS.filter((f) => f.kind === '3d' || f.kind === 'bim').map((f) => (
-                  <DropdownMenuItem key={f.id} hint={f.extensions[0]?.toUpperCase()} onSelect={() => void exportAs(f.id)}>
+                  <DropdownMenuItem key={f.id} hint={f.extensions[0]?.toUpperCase()} disabled={!engineAvailable} onSelect={() => void exportAs(f.id)}>
                     {f.label}
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>{t('menu.io.export2d', 'Drawings & data')}</DropdownMenuLabel>
                 {EXPORT_FORMATS.filter((f) => f.kind === '2d' || f.kind === 'data').map((f) => (
-                  <DropdownMenuItem key={f.id} hint={f.extensions[0]?.toUpperCase()} onSelect={() => (f.id === 'pdf' ? ui.setLeftTab('sheets') : f.id === 'csv' ? ui.setLeftTab('schedules') : void exportAs(f.id, { levelId: editor.getState().activeLevel }))}>
+                  <DropdownMenuItem key={f.id} hint={f.extensions[0]?.toUpperCase()} disabled={!engineAvailable} onSelect={() => (f.id === 'pdf' ? ui.setLeftTab('sheets') : f.id === 'csv' ? ui.setLeftTab('schedules') : void exportAs(f.id, { levelId: editor.getState().activeLevel }))}>
                     {f.label}
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => ui.openDialog('renderImage')} hint="PNG">
+                <DropdownMenuItem onSelect={() => ui.openDialog('renderImage')} hint="PNG" disabled={!engineAvailable}>
                   {t('menu.io.renderImage', 'Render image…')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => void exportAs('csb')} hint="CSB">

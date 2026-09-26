@@ -60,6 +60,7 @@ export const sharing = {
   'share.visibility.privateDesc': 'Nur eingeladene Personen und Organisationen können es öffnen.',
   'share.visibility.public': 'Öffentlich',
   'share.visibility.publicDesc': 'Jede Person im Internet kann es ansehen — ohne Konto. Bearbeiten erfordert weiterhin eine Einladung.',
+  'share.viaLink': 'über Freigabelink',
   'share.you': 'Sie',
   'support.accessActive': 'Der Support darf das verknüpfte Projekt bis {date} ausschließlich lesend öffnen.',
   'support.accessNone': 'Der Support kann das verknüpfte Projekt nicht öffnen.',

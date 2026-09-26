@@ -8,6 +8,7 @@ export const core = {
   'banner.offline': 'Sie sind offline. Arbeiten Sie einfach weiter — Änderungen werden auf diesem Gerät gespeichert und synchronisiert, sobald Sie wieder online sind.',
   'banner.serverOffline': 'Der CadSandbox-Server ist nicht erreichbar. Sie können weiterarbeiten — Änderungen werden auf diesem Gerät gespeichert und später synchronisiert.',
   'banner.stopImpersonating': 'Ansicht beenden',
+  'banner.storageFull': 'Ihr Speicher ist voll ({used} von {quota}), daher sind Ihre Projekte schreibgeschützt. Löschen Sie Dateien oder Projekte, die Sie nicht mehr brauchen, um weiterzuarbeiten.',
   'common.back': 'Zurück',
   'common.cancel': 'Abbrechen',
   'common.close': 'Schließen',

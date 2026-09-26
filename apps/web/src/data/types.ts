@@ -4,7 +4,7 @@
 import type { Awareness } from 'y-protocols/awareness'
 import type { CadDocument, DocSnapshot, MaterialDef, ProjectManifest } from '@cadsandbox/doc'
 import type { EditorAssets, EditorUser } from '@cadsandbox/render'
-import type { CollectionDTO, CollectionItemDTO, CollectionItemKind, ProjectDTO, ProjectRole, VersionDTO } from '@cadsandbox/shared'
+import type { CollectionDTO, CollectionItemDTO, CollectionItemKind, ProjectDTO, ProjectRole, VersionDTO, WriteBlock } from '@cadsandbox/shared'
 
 export type SyncStatus = 'local' | 'connecting' | 'syncing' | 'synced' | 'offline' | 'error'
 
@@ -26,6 +26,8 @@ export interface ProjectSession {
   mode: 'local' | 'cloud'
   role: ProjectRole
   readOnly: boolean
+  /** Editing is paused for everyone: the owner is out of storage, or a design is too large. */
+  writeBlock: WriteBlock | null
   manifest: ProjectManifest
   /** Resolves when the manifest is loaded/synced. */
   ready: Promise<void>

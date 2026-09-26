@@ -22,6 +22,7 @@ import {
   type RouteKey,
   type Schemas,
   type ShareLinkDTO,
+  type SignupChallengeDTO,
   type TicketDTO,
   type TicketStatus,
   type UserDTO,
@@ -93,6 +94,8 @@ export const api = {
   config: () => call<PublicConfigDTO>('config', {}, { retries: 1, timeoutMs: 8000 }),
   announcements: () => call<AnnouncementDTO[]>('announcements').then(toList),
 
+  /** Proof-of-work challenge for the sign-up form (see data/auth/pow.ts). */
+  signupChallenge: () => call<SignupChallengeDTO>('signupChallenge', {}),
   me: {
     get: () => call<MeDTO>('me', {}, { retries: 1 }),
     update: (body: Schemas['updateMe']) => call<UserDTO>('updateMe', {}, { json: body }),
@@ -100,6 +103,7 @@ export const api = {
     exportUrl: () => apiUrl(routePath('exportMe')),
     delete: (confirmEmail: string) => call<{ deletionScheduledAt: string }>('deleteMe', {}, { json: { confirmEmail } }),
     cancelDeletion: () => call<void>('cancelDeleteMe', {}, { responseType: 'void' }),
+    acceptTerms: (version: string) => call<MeDTO>('acceptTerms', {}, { json: { version } }),
   },
 
   folders: {

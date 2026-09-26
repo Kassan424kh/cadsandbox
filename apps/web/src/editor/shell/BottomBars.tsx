@@ -191,7 +191,7 @@ export function ContextPill() {
 export function WalkRenderPill() {
   const t = useT()
   const actions = useActions()
-  const { editor } = useEditorCtx()
+  const { editor, engineAvailable } = useEditorCtx()
   const tool = useEditorState((s) => s.tool)
   const realistic = useEditorState((s) => s.realistic)
   const phone = usePhone()
@@ -209,6 +209,7 @@ export function WalkRenderPill() {
           label={t('action.render', 'Render')}
           showLabel={!compact}
           accent
+          disabled={!engineAvailable}
           active={realistic.active}
           onClick={() => (realistic.active ? (editor.stopRealistic(), editor.setRenderMode('shaded')) : (editor.setRenderMode('realistic'), editor.startRealistic()))}
           tooltip={realistic.active ? t('action.renderStop', 'Stop realistic rendering · {s}/{n} samples', { s: realistic.samples, n: realistic.targetSamples }) : t('action.renderTip', 'Realistic path-traced preview')}

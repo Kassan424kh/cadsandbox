@@ -68,6 +68,7 @@ export const LIMIT_RULES = {
   ticketMessagePerUser: [60, 3600],
   collabUpgradePerIp: [120, 60],
   deleteAccountPerUser: [5, 3600],
+  clientErrorsPerIp: [30, 60],
 } as const satisfies Record<string, readonly [number, number]>
 
 export type LimitRule = keyof typeof LIMIT_RULES

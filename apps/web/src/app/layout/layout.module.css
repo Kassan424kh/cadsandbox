@@ -129,6 +129,11 @@
   border-top: 1px solid var(--cs-border);
 }
 
+.sidebarLegal {
+  justify-content: flex-start;
+  padding-inline: 4px;
+}
+
 .nudge {
   display: grid;
   gap: 10px;

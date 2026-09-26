@@ -60,21 +60,33 @@ const EnvSchema = z.object({
   MAIL_FROM: z.string().default(`${BRAND.name} <no-reply@localhost>`),
   EMAIL_VERIFICATION: bool(true),
   SIGNUP_ENABLED: bool(true),
+  /** Proof-of-work challenge at sign-up (self-hosted, no third party); difficulty = max number tried. */
+  SIGNUP_CAPTCHA: bool(true),
+  SIGNUP_CAPTCHA_DIFFICULTY: z.coerce.number().int().min(1000).max(10_000_000).default(100_000),
   PUBLIC_SHARING: bool(true),
   COLLAB_ENABLED: bool(true),
   PASSKEY_RP_ID: optStr,
   PASSKEY_RP_NAME: z.string().default(BRAND.name),
   ADMIN_EMAILS: csv,
   STORAGE_QUOTA_BYTES: z.coerce.number().int().positive().default(LIMITS.defaultStorageQuotaBytes),
-  MAX_PROJECTS_FREE: z.coerce.number().int().positive().default(100),
+  MAX_PROJECTS_FREE: z.coerce.number().int().positive().default(5),
   LEGAL_IMPRINT_URL: z.string().default('/legal/imprint'),
   LEGAL_PRIVACY_URL: z.string().default('/legal/privacy'),
   LEGAL_TERMS_URL: z.string().default('/legal/terms'),
   LEGAL_DPA_URL: z.string().default('/legal/dpa'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  /** Sentry-compatible DSN of a self-hosted GlitchTip project; unset = no error reports. */
+  SENTRY_DSN: optStr,
+  SENTRY_ENVIRONMENT: optStr,
   RATE_LIMIT: bool(true),
   JOBS_ENABLED: bool(true),
   COLLAB_MAX_MESSAGE_BYTES: z.coerce.number().int().min(64 * 1024).default(16 * 1024 * 1024),
+  /** Bytes per project and hour served to visitors (public projects, share-link guests). */
+  VISITOR_EGRESS_BYTES_PER_HOUR: z.coerce.number().int().min(1024 * 1024).default(2 * 1024 * 1024 * 1024),
+  /** Extra e-mail domains refused at sign-up (comma-separated), on top of the built-in disposable list. */
+  BLOCKED_EMAIL_DOMAINS: csv,
+  /** A design (Yjs document) larger than this turns read-only — protects server memory and the database. */
+  COLLAB_MAX_DOC_BYTES: z.coerce.number().int().min(1024 * 1024).default(64 * 1024 * 1024),
 })
 
 export interface Config {
@@ -103,7 +115,9 @@ export interface Config {
     s3: { endpoint?: string; region: string; bucket?: string; accessKeyId?: string; secretAccessKey?: string; forcePathStyle: boolean; prefix: string }
   }
   smtp: { host?: string; port: number; secure: boolean; user?: string; pass?: string; from: string }
-  features: { signup: boolean; collab: boolean; emailVerification: boolean; passkeys: boolean; publicSharing: boolean }
+  features: { signup: boolean; signupCaptcha: boolean; collab: boolean; emailVerification: boolean; passkeys: boolean; publicSharing: boolean; errorReporting: boolean }
+  errorReports: { dsn: string | undefined; environment: string }
+  signupCaptchaDifficulty: number
   passkey: { rpId: string; rpName: string }
   adminEmails: string[]
   storageQuotaBytes: number
@@ -114,6 +128,9 @@ export interface Config {
   jobsEnabled: boolean
   collabPath: string
   collabMaxMessageBytes: number
+  collabMaxDocBytes: number
+  visitorEgressBytesPerHour: number
+  blockedEmailDomains: string[]
 }
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -222,11 +239,15 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
     smtp: { host: e.SMTP_HOST, port: e.SMTP_PORT, secure: e.SMTP_SECURE, user: e.SMTP_USER, pass: e.SMTP_PASS, from: e.MAIL_FROM },
     features: {
       signup: e.SIGNUP_ENABLED,
+      signupCaptcha: e.SIGNUP_CAPTCHA,
       collab: e.COLLAB_ENABLED,
       emailVerification: e.EMAIL_VERIFICATION,
       passkeys: true,
       publicSharing: e.PUBLIC_SHARING,
+      errorReporting: !!e.SENTRY_DSN,
     },
+    errorReports: { dsn: e.SENTRY_DSN, environment: e.SENTRY_ENVIRONMENT ?? e.NODE_ENV },
+    signupCaptchaDifficulty: e.SIGNUP_CAPTCHA_DIFFICULTY,
     passkey: { rpId: e.PASSKEY_RP_ID ?? new URL(publicUrl).hostname, rpName: e.PASSKEY_RP_NAME },
     adminEmails: e.ADMIN_EMAILS.map((m) => m.toLowerCase()),
     storageQuotaBytes: e.STORAGE_QUOTA_BYTES,
@@ -237,5 +258,8 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
     jobsEnabled: e.JOBS_ENABLED,
     collabPath: '/collab',
     collabMaxMessageBytes: e.COLLAB_MAX_MESSAGE_BYTES,
+    collabMaxDocBytes: e.COLLAB_MAX_DOC_BYTES,
+    visitorEgressBytesPerHour: e.VISITOR_EGRESS_BYTES_PER_HOUR,
+    blockedEmailDomains: e.BLOCKED_EMAIL_DOMAINS.map((x) => x.toLowerCase()),
   }
 }

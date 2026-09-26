@@ -81,6 +81,12 @@
   pointer-events: auto;
 }
 
+.placeholderDetail {
+  color: var(--cs-text-3);
+  font-size: var(--cs-text-xs);
+  overflow-wrap: anywhere;
+}
+
 .placeholderTitle {
   font-family: var(--cs-font-display);
   font-size: var(--cs-text-lg);

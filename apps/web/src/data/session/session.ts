@@ -2,7 +2,7 @@
 // Hocuspocus) projects. The editor never branches on mode.
 import * as Y from 'yjs'
 import { CadDocument, LOCAL_ORIGIN, ProjectManifest, SILENT_ORIGIN, newId, type CommentAuthor } from '@cadsandbox/doc'
-import { LIMITS, can, docNames, type ProjectDTO, type ProjectRole, type VersionDTO } from '@cadsandbox/shared'
+import { LIMITS, can, docNames, type ProjectDTO, type ProjectRole, type VersionDTO, type WriteBlock } from '@cadsandbox/shared'
 import type { EditorUser } from '@cadsandbox/render'
 import type { DesignHandle, ProjectComments, ProjectSession, SyncStatus } from '../types'
 import { api } from '../api/endpoints'
@@ -67,6 +67,7 @@ export class ProjectSessionImpl implements ProjectSession {
   readonly mode: 'local' | 'cloud'
   readonly role: ProjectRole
   readonly readOnly: boolean
+  readonly writeBlock: WriteBlock | null
   readonly manifest: ProjectManifest
   readonly ready: Promise<void>
   readonly assets: ProjectAssets
@@ -96,7 +97,9 @@ export class ProjectSessionImpl implements ProjectSession {
     this.projectId = init.projectId
     this.mode = init.mode
     this.role = init.role
-    this.readOnly = !can(init.role, 'edit')
+    // The server makes collab connections read-only while writes are blocked — match that here.
+    this.writeBlock = can(init.role, 'edit') ? (init.project?.writeBlock ?? null) : null
+    this.readOnly = !can(init.role, 'edit') || !!this.writeBlock
     this.project = init.project
     this.user = init.user
     this.shareToken = init.shareToken ?? null

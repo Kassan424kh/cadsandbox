@@ -15,6 +15,7 @@ import { errorMessage } from '../components/Dialogs'
 import { UserMenu } from './UserMenu'
 import s from './layout.module.css'
 import { LinkButton } from '../components/LinkButton'
+import { LegalLinks } from '../components/LegalLinks'
 
 function Item({ to, icon, label, end, className }: { to: string; icon: ReactNode; label: string; end?: boolean; className?: string }) {
   return (
@@ -136,6 +137,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             </div>
           </div>
         )}
+        <LegalLinks className={s.sidebarLegal} />
       </div>
       <CreateOrgDialog open={createOrg} onOpenChange={setCreateOrg} />
     </aside>

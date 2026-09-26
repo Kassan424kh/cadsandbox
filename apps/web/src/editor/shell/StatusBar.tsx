@@ -87,7 +87,7 @@ export function StatusBar() {
     // phones are viewers: only the gesture hint
     return (
       <footer className={cx(styles.statusRow, styles.statusBar)} role="status">
-        <span className={styles.statusHint}>{t('status.hintViewer', 'Drag to orbit · two fingers to pan and zoom')}</span>
+        <span className={styles.statusHint}>{t('status.hintPhone', 'Editing needs a larger screen · drag to orbit, two fingers to pan and zoom')}</span>
       </footer>
     )
   }
@@ -100,7 +100,7 @@ export function StatusBar() {
         <span>{t(meta.key, meta.fallback)}</span>
       </span>
       <span className={styles.statusSep} />
-      <span className={styles.statusHint}>{engineAvailable ? hint || defaultHint : t('status.engineLoading', 'Viewport engine not loaded — panels and document editing are available')}</span>
+      <span className={styles.statusHint}>{engineAvailable ? hint || defaultHint : t('status.engineUnavailable', '3D view unavailable — panels and document editing still work')}</span>
       {measure && (
         <span className={styles.statusItem} style={{ color: 'var(--cs-text)' }}>
           {measure.kind === 'distance' ? formatLength(measure.value, units.length, units.precision) : measure.kind === 'area' ? `${measure.value.toFixed(2)} m²` : `${((measure.value * 180) / Math.PI).toFixed(1)}°`}

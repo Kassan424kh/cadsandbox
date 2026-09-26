@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import pino from 'pino'
 import { eq } from 'drizzle-orm'
+import { LEGAL } from '@cadsandbox/shared'
 import { createRuntime } from '../src/bootstrap'
 import { user } from '../src/db/schema'
 import type { Deps } from '../src/deps'
@@ -49,6 +50,7 @@ export async function testServer(env: Record<string, string> = {}): Promise<Test
     PGLITE_DIR: 'memory://',
     PUBLIC_URL: ORIGIN,
     EMAIL_VERIFICATION: 'false',
+    SIGNUP_CAPTCHA: 'false',
     RATE_LIMIT: 'false',
     JOBS_ENABLED: 'false',
     LOG_LEVEL: 'silent',
@@ -69,7 +71,14 @@ export async function testServer(env: Record<string, string> = {}): Promise<Test
       headers['content-type'] = 'application/json'
       body = JSON.stringify(o.json)
     }
-    return Promise.resolve(app.request(`http://localhost:8787${path}`, { method, headers, body }))
+    // Like real HTTP clients, declare the size of fixed-length bodies.
+    if (body !== undefined && body !== null && !Object.keys(headers).some((k) => k.toLowerCase() === 'content-length')) {
+      if (typeof body === 'string') headers['content-length'] = String(Buffer.byteLength(body))
+      else if (body instanceof Uint8Array || body instanceof ArrayBuffer) headers['content-length'] = String(body.byteLength)
+    }
+    const init: RequestInit & { duplex?: 'half' } = { method, headers, body }
+    if (body instanceof ReadableStream) init.duplex = 'half'
+    return Promise.resolve(app.request(`http://localhost:8787${path}`, init))
   }
 
   const server: TestServer = {
@@ -83,7 +92,7 @@ export async function testServer(env: Record<string, string> = {}): Promise<Test
       return { status: res.status, body: text ? JSON.parse(text) : null, res }
     },
     async signup(email, name = email.split('@')[0]!) {
-      const res = await req('POST', '/api/auth/sign-up/email', { json: { email, password: 'correct-horse-battery-staple', name } })
+      const res = await req('POST', '/api/auth/sign-up/email', { json: { email, password: 'correct-horse-battery-staple', name, termsVersion: LEGAL.termsVersion } })
       if (res.status !== 200) throw new Error(`signup failed ${res.status}: ${await res.text()}`)
       const body = (await res.json()) as { user: { id: string } }
       const cookie = res.headers

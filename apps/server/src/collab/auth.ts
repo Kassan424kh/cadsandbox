@@ -6,6 +6,7 @@ import type { Db } from '../db/client'
 import { session as sessionTable, user as userTable } from '../db/schema'
 import type { CollabContext } from '../deps'
 import { hasSupportGrantFrom, resolveProjectAccess } from '../services/access'
+import { writeBlock, type WriteLimits } from '../services/projects'
 import type { ShareGrants } from '../services/share-grants'
 import { systemRole } from '../services/users'
 
@@ -26,6 +27,8 @@ export interface CollabAccessDeps {
   db: Db
   publicSharing: boolean
   grants?: ShareGrants
+  /** Storage quota and design size limit; without it writability depends on the role only. */
+  limits?: WriteLimits
 }
 
 export async function decideCollabAccess(deps: CollabAccessDeps & { auth: Auth }, input: CollabAuthInput): Promise<CollabDecision> {
@@ -46,15 +49,19 @@ export async function decideCollabAccess(deps: CollabAccessDeps & { auth: Auth }
   if (s && impersonatedBy && !(await hasSupportGrantFrom(deps.db, parsed.projectId, s.user.id))) {
     return { ok: false, reason: 'impersonation', projectId: parsed.projectId, userId: s.user.id, impersonatedBy }
   }
+  let readOnly = !!impersonatedBy || !can(access.role, 'edit') || access.via === 'support'
+  // Out of storage / design too large: everyone's connection is read-only until that is resolved.
+  if (!readOnly && deps.limits && (await writeBlock(deps.db, access.project, deps.limits))) readOnly = true
   return {
     ok: true,
-    readOnly: !!impersonatedBy || !can(access.role, 'edit') || access.via === 'support',
+    readOnly,
     context: {
       userId: s?.user.id ?? null,
       userName: s?.user.name ?? null,
       sessionId: s?.session.id ?? null,
       systemRole: role,
       projectId: parsed.projectId,
+      ownerId: access.project.ownerId,
       role: impersonatedBy ? 'viewer' : access.role,
       linkId: impersonatedBy ? null : access.linkId,
       shareToken: !impersonatedBy && access.via === 'link' ? token : null,
@@ -88,6 +95,7 @@ export async function stillAllowed(deps: CollabAccessDeps, ctx: CollabContext, r
   if (!access) return false
   // Impersonation connections live only as long as the user's support grant (revoked/expired → close).
   if (ctx.impersonatedBy) return readOnly && !!ctx.userId && (await hasSupportGrantFrom(deps.db, ctx.projectId, ctx.userId))
-  const shouldBeReadOnly = !can(access.role, 'edit') || access.via === 'support'
+  let shouldBeReadOnly = !can(access.role, 'edit') || access.via === 'support'
+  if (!shouldBeReadOnly && deps.limits && (await writeBlock(deps.db, access.project, deps.limits))) shouldBeReadOnly = true
   return shouldBeReadOnly === readOnly && access.role === ctx.role
 }

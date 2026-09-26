@@ -79,7 +79,7 @@ export function Onboarding() {
       <div className={styles.card} style={cardStyle}>
         <div className={styles.step}>
           {t('onboarding.step', 'Tip {n} of {total}', { n: step + 1, total: steps.length })}
-          {!engineAvailable && step === 0 ? ` · ${t('onboarding.enginePending', 'viewport loading')}` : ''}
+          {!engineAvailable && step === 0 ? ` · ${t('onboarding.engineUnavailable', '3D view unavailable')}` : ''}
         </div>
         <div className={styles.title}>{current.title}</div>
         <div className={styles.body}>{current.body}</div>

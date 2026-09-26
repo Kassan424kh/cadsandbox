@@ -6,6 +6,7 @@ export const core = {
   'banner.offline': 'You are offline. Keep working — changes are saved on this device and sync when you are back online.',
   'banner.serverOffline': 'The CadSandbox server is unreachable. You can keep working — changes are saved on this device and sync later.',
   'banner.stopImpersonating': 'Stop impersonating',
+  'banner.storageFull': 'Your storage is full ({used} of {quota}), so your projects are read-only. Delete files or projects you no longer need to keep editing.',
   'common.back': 'Back',
   'common.cancel': 'Cancel',
   'common.close': 'Close',

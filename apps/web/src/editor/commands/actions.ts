@@ -5,17 +5,24 @@ import type { NewNode } from '@cadsandbox/doc'
 import { useT } from '../../i18n'
 import { toast } from '../../ui'
 import { useEditorCtx } from '../EditorContext'
+import { writeBlockMessage } from '../writeBlock'
 import { TOOL_META, toolDefaults, toolOptionSpecs, useToolRegistry } from '../engine/tools'
 import { useUiStore } from '../ui-store'
 
 export function useActions() {
-  const { editor, doc, readOnly } = useEditorCtx()
+  const { editor, doc, readOnly, viewOnlyOnDevice, session } = useEditorCtx()
   const registry = useToolRegistry()
   const t = useT()
   return useMemo(() => {
     const guard = (): boolean => {
       if (readOnly) {
-        toast.info(t('editor.readOnlyHint', 'You have view access — ask the owner for edit rights to change this design.'))
+        toast.info(
+          viewOnlyOnDevice
+            ? t('editor.readOnlyDevice', 'Editing needs a larger screen — open this project on a tablet or computer to change it.')
+            : session.writeBlock
+              ? writeBlockMessage(t, session.writeBlock, session.role === 'owner')
+              : t('editor.readOnlyHint', 'You have view access — ask the owner for edit rights to change this design.'),
+        )
         return false
       }
       return true
@@ -72,7 +79,7 @@ export function useActions() {
       readOnly,
       canEdit: !readOnly,
     }
-  }, [editor, doc, readOnly, registry, t])
+  }, [editor, doc, readOnly, viewOnlyOnDevice, session, registry, t])
 }
 
 export type Actions = ReturnType<typeof useActions>

@@ -35,9 +35,26 @@ export function redactUrl(url: string): string {
     .replace(/(\/reset-password\/)[^/?#]+/, '$1[redacted]')
 }
 
-export function createLogger(level: string, isProd: boolean): Logger {
+/** `onError` sees the raw arguments of every error/fatal log call (see lib/error-reports.ts). */
+export function createLogger(level: string, isProd: boolean, onError?: (args: unknown[]) => void): Logger {
   return pino({
     level,
+    ...(onError
+      ? {
+          hooks: {
+            logMethod(args, method, lvl) {
+              if (lvl >= 50) {
+                try {
+                  onError(args)
+                } catch {
+                  // reporting must never break logging
+                }
+              }
+              return method.apply(this, args)
+            },
+          },
+        }
+      : {}),
     base: { service: 'cadsandbox-server' },
     redact: { paths: REDACT, censor: '[redacted]' },
     timestamp: pino.stdTimeFunctions.isoTime,

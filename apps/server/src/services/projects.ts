@@ -1,7 +1,7 @@
 // Project queries & mutations shared by routes and jobs.
 import { and, count, desc, eq, exists, ilike, inArray, isNotNull, isNull, ne, or, sql, type SQL } from 'drizzle-orm'
 import * as Y from 'yjs'
-import { docNames, type Page, type ProjectDTO, type ProjectRole, type Schemas } from '@cadsandbox/shared'
+import { docNames, type Page, type ProjectDTO, type ProjectRole, type Schemas, type WriteBlock } from '@cadsandbox/shared'
 import { rowsOf, type DbOrTx } from '../db/client'
 import { blobs, collabDocs, orgProjectGrants, projectBlobs, projects, recents, stars, user } from '../db/schema'
 import type { Deps } from '../deps'
@@ -124,15 +124,40 @@ export async function touchRecent(db: DbOrTx, userId: string, projectId: string)
     .onConflictDoUpdate({ target: [recents.userId, recents.projectId], set: { openedAt: new Date() } })
 }
 
-/** Bytes charged to a user's quota: distinct blobs of owned projects + own assets + collab docs. */
+/**
+ * Bytes charged to a user's quota: distinct blobs of owned projects + own assets + collab docs +
+ * library items (JSON payload and thumbnail) in the user's collections.
+ */
 export async function storageUsage(db: DbOrTx, userId: string): Promise<number> {
   const res = await db.execute(sql`SELECT (
       SELECT COALESCE(SUM(b.size), 0) FROM blobs b WHERE b.hash IN (
         SELECT pb.hash FROM project_blobs pb JOIN projects p ON p.id = pb.project_id WHERE p.owner_id = ${userId}
         UNION SELECT ua.hash FROM user_assets ua WHERE ua.user_id = ${userId}
         UNION SELECT p.thumbnail_hash FROM projects p WHERE p.owner_id = ${userId} AND p.thumbnail_hash IS NOT NULL)
-    ) + (SELECT COALESCE(SUM(cd.size), 0) FROM collab_docs cd JOIN projects p ON p.id = cd.project_id WHERE p.owner_id = ${userId}) AS n`)
+    ) + (SELECT COALESCE(SUM(cd.size), 0) FROM collab_docs cd JOIN projects p ON p.id = cd.project_id WHERE p.owner_id = ${userId})
+      + (SELECT COALESCE(SUM(octet_length(COALESCE(ci.payload::text, '')) + octet_length(COALESCE(ci.thumbnail, ''))), 0)
+           FROM collection_items ci JOIN collections col ON col.id = ci.collection_id WHERE col.owner_id = ${userId}) AS n`)
   return Number(rowsOf<{ n: string | number }>(res)[0]?.n ?? 0)
+}
+
+export interface WriteLimits {
+  storageQuotaBytes: number
+  maxDocBytes: number
+}
+
+/**
+ * Why edits to a project's documents are paused for everyone: one of its designs outgrew the
+ * per-document limit, or its owner is out of storage (the owner pays for shared projects). null = OK.
+ */
+export async function writeBlock(db: DbOrTx, project: { id: string; ownerId: string }, limits: WriteLimits): Promise<WriteBlock | null> {
+  const [big] = await db
+    .select({ name: collabDocs.name })
+    .from(collabDocs)
+    .where(and(eq(collabDocs.projectId, project.id), sql`${collabDocs.size} > ${limits.maxDocBytes}`))
+    .limit(1)
+  if (big) return 'design_too_large'
+  if ((await storageUsage(db, project.ownerId)) >= limits.storageQuotaBytes) return 'storage_full'
+  return null
 }
 
 /** Recompute projects.size_bytes (docs + distinct blobs + thumbnail). */
@@ -149,11 +174,12 @@ export async function refreshProjectSize(db: DbOrTx, projectId: string, touch = 
     .where(eq(projects.id, projectId))
 }
 
+/** Cloud projects counted against the project limit — trashed ones don't count. */
 export async function countOwnedProjects(db: DbOrTx, userId: string): Promise<number> {
   const [r] = await db
     .select({ n: count() })
     .from(projects)
-    .where(eq(projects.ownerId, userId))
+    .where(and(eq(projects.ownerId, userId), isNull(projects.deletedAt)))
   return Number(r?.n ?? 0)
 }
 

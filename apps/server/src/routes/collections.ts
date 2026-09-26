@@ -10,6 +10,7 @@ import { badRequest, forbidden, notFound } from '../lib/errors'
 import { jsonBody, param, requireAuth, requireRealUser, type AppEnv } from '../http/context'
 import { jsonLimit, KB, MB, register } from '../http/router'
 import { membershipRole } from '../services/orgs'
+import { assertQuota } from '../services/uploads'
 
 type CollectionRow = typeof collections.$inferSelect
 const THUMB = /^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/
@@ -124,6 +125,9 @@ export function collectionRoutes(app: Hono<AppEnv>): void {
     const { col } = await loadCollection(db, param(c, 'id'), s.user.id, 'write')
     const input = await jsonBody(c, schemas.createCollectionItem)
     if (input.thumbnail && !THUMB.test(input.thumbnail)) throw badRequest('thumbnail must be a data:image URL (webp/png/jpeg)')
+    // Library items count toward the creator's storage (see storageUsage).
+    const bytes = Buffer.byteLength(JSON.stringify(input.payload ?? null)) + (input.thumbnail?.length ?? 0)
+    await assertQuota(db, s.user.id, c.get('deps').config.storageQuotaBytes, bytes)
     const assets = [...new Set(input.assets)]
     if (assets.length) {
       const owned = await db

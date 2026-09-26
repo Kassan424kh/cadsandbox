@@ -1,10 +1,10 @@
 // Everything floating over the canvas: top/bottom pills, tool options, viewport chips, drop
-// handling (library items, materials, collection items, files) and the engine placeholder notice.
+// handling (library items, materials, collection items, files) and the "3D view unavailable" notice.
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react'
-import { Upload } from 'lucide-react'
+import { RefreshCw, Upload } from 'lucide-react'
 import type { MaterialDef, DocSnapshot } from '@cadsandbox/doc'
 import { useT } from '../../i18n'
-import { cx, toast } from '../../ui'
+import { Button, cx, toast } from '../../ui'
 import { useEditorCtx, useEditorState } from '../EditorContext'
 import { endDrag, hasDragPayload, hasFiles, payloadContent, peekDrag, readDragPayload } from '../io/dnd'
 import { useImportExport } from '../io/useImportExport'
@@ -17,17 +17,36 @@ import { ToolOptionsBar } from './ToolOptionsBar'
 import { ModePill, TopLeft, TopRight } from './TopBar'
 import { ViewportChrome } from './ViewportChrome'
 
-function PlaceholderNotice() {
-  const t = useT()
+/** Empty stage drawn behind the chrome when the render engine could not start. */
+function PlaceholderStage() {
   const layout = useEditorState((s) => s.layout)
-  const nodes = useEditorState((s) => s.stats.nodes)
   return (
-    <div className={styles.placeholder} aria-live="polite">
+    <div className={styles.placeholder}>
       {layout === 'split' && <div className={styles.placeholderSplit} />}
       <div className={styles.placeholderGround} />
-      <div className={styles.placeholderCard}>
-        <div className={styles.placeholderTitle}>{t('placeholder.title', 'Viewport engine is on its way')}</div>
-        <div>{t('placeholder.body', 'The 3D renderer is being built. Your document, panels and edits already work — {count} objects in this design.', { count: nodes })}</div>
+    </div>
+  )
+}
+
+/** Why the 3D view is missing and what to do about it (lives in the overlay so Reload is clickable). */
+function EngineUnavailableNotice() {
+  const t = useT()
+  const { engineError } = useEditorCtx()
+  const webgl = /webgl/i.test(engineError ?? '')
+  return (
+    <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none' }}>
+      <div className={styles.placeholderCard} role="alert">
+        <div className={styles.placeholderTitle}>{t('engine.unavailableTitle', '3D view unavailable')}</div>
+        <div>
+          {webgl
+            ? t('engine.unavailableWebgl', 'Your browser could not start WebGL 2, which the 3D view needs. Turn on hardware acceleration in the browser settings, update your graphics driver, or use a current Chrome, Edge, Firefox or Safari.')
+            : t('engine.unavailableLoad', 'The 3D engine could not be loaded. Check your connection and reload the page.')}
+        </div>
+        <div>{t('engine.unavailableStill', 'Panels and document editing still work. Exports that need the 3D view are paused.')}</div>
+        <Button size="sm" variant="secondary" icon={<RefreshCw size={14} />} onClick={() => window.location.reload()}>
+          {t('engine.reload', 'Reload')}
+        </Button>
+        {engineError && <small className={styles.placeholderDetail}>{engineError}</small>}
       </div>
     </div>
   )
@@ -155,8 +174,9 @@ export function StageChrome() {
 
   return (
     <StageContext.Provider value={stage}>
-      {!engineAvailable && <PlaceholderNotice />}
+      {!engineAvailable && <PlaceholderStage />}
       <div ref={overlayRef} className={styles.overlay} onContextMenu={onContextMenu} style={{ pointerEvents: !engineAvailable ? 'auto' : 'none' }}>
+        {!engineAvailable && <EngineUnavailableNotice />}
         {dropping && (
           <div className={styles.dropOverlay}>
             <div className={styles.dropCard}>

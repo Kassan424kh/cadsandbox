@@ -6,11 +6,12 @@ import type { Editor } from '@cadsandbox/render'
 import { useT } from '../i18n'
 import type { DesignHandle, LibraryStore, ProjectSession } from '../data/types'
 import { usePrefs } from '../data/prefs'
-import { Button, EmptyState, Spinner, Toaster, TooltipProvider, useTheme } from '../ui'
+import { Button, EmptyState, Spinner, Toaster, TooltipProvider, toast, useTheme } from '../ui'
 import { usePhone } from './shell/hooks'
 import styles from './editor.module.css'
 import { EditorContext, type EditorContextValue } from './EditorContext'
 import { createEngine } from './engine/createEngine'
+import { writeBlockMessage } from './writeBlock'
 import { EditorShell } from './shell/EditorShell'
 import { StageChrome } from './shell/StageChrome'
 
@@ -40,6 +41,10 @@ export function EditorPage({ session, fileId: fileIdProp, onOpenFile, onExit, on
   const [needToaster] = useState(() => typeof document !== 'undefined' && !document.querySelector('[data-sonner-toaster]'))
   const themeRef = useRef(resolved)
   themeRef.current = resolved
+  // The route passes new callback functions on every render; reading them through a ref keeps the
+  // engine effect keyed on the document only (re-running it tears down WebGL and all workers).
+  const navRef = useRef({ onOpenFile, onExit })
+  navRef.current = { onOpenFile, onExit }
 
   useEffect(() => {
     if (!fileId) {
@@ -80,15 +85,17 @@ export function EditorPage({ session, fileId: fileIdProp, onOpenFile, onExit, on
       const ctx: EditorContextValue = {
         editor,
         engineAvailable: result.available,
+        engineError: result.available ? null : (result.error ?? null),
         doc: handle.doc,
         session,
         handle,
         fileId,
         library: library ?? null,
-        onOpenFile,
-        onExit,
+        onOpenFile: (id) => navRef.current.onOpenFile(id),
+        onExit: () => navRef.current.onExit(),
         onImportProject,
         readOnly: session.readOnly,
+        viewOnlyOnDevice: false,
       }
       // Thumbnail after local edits (debounced, best effort).
       if (!session.readOnly) {
@@ -124,7 +131,13 @@ export function EditorPage({ session, fileId: fileIdProp, onOpenFile, onExit, on
       handle?.release()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, fileId, library, onOpenFile, onExit])
+  }, [session, fileId, library])
+
+  // Say once why an editable project opened read-only (storage full / design too large).
+  useEffect(() => {
+    if (status.kind === 'ready' && session.writeBlock) toast.warning(writeBlockMessage(t, session.writeBlock, session.role === 'owner'), { duration: 12_000 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status.kind, session])
 
   useEffect(() => {
     if (status.kind === 'ready') status.ctx.editor.setTheme(resolved)
@@ -144,7 +157,7 @@ export function EditorPage({ session, fileId: fileIdProp, onOpenFile, onExit, on
 
   // Phones are view-only: the whole chrome behaves like a read-only session (no editing UI at all);
   // the engine side is handled by navigation.viewOnly above.
-  const ctx = useMemo(() => (status.kind === 'ready' ? (phone && !status.ctx.readOnly ? { ...status.ctx, readOnly: true } : status.ctx) : null), [status, phone])
+  const ctx = useMemo(() => (status.kind === 'ready' ? (phone && !status.ctx.readOnly ? { ...status.ctx, readOnly: true, viewOnlyOnDevice: true } : status.ctx) : null), [status, phone])
   return (
     <TooltipProvider>
       <EditorContext.Provider value={ctx}>

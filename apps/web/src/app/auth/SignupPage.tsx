@@ -1,10 +1,12 @@
 // /signup — create an account (email + password), accept terms, email verification notice.
-import { useId, useState, type FormEvent } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { KeyRound, Mail, User, UserPlus } from 'lucide-react'
+import { LEGAL } from '@cadsandbox/shared'
 import { Button, Checkbox, Input } from '../../ui'
 import { getLanguage, useT } from '../../i18n'
 import { authClient, unwrap } from '../../data/auth/client'
+import { signupProof } from '../../data/auth/pow'
 import { useAuth } from '../../data/auth/AuthProvider'
 import { useServer } from '../../data/online'
 import { api } from '../../data/api/endpoints'
@@ -52,6 +54,26 @@ export default function SignupPage() {
   const [sent, setSent] = useState(false)
   useDocumentTitle(t('auth.createAccount', 'Create account'))
 
+  // Sign-up proof-of-work: solved in the background while the form is filled in. Challenges expire
+  // after 10 minutes and are single-use, so a stale or used one is replaced.
+  const captchaOn = !!config?.features.signupCaptcha
+  const proof = useRef<{ at: number; value: Promise<string> } | null>(null)
+  const freshProof = () => {
+    if (!proof.current || Date.now() - proof.current.at > 8 * 60_000) {
+      const value = signupProof()
+      // A failed attempt (e.g. offline) must not stick — the next submit fetches a new challenge.
+      value.catch(() => {
+        if (proof.current?.value === value) proof.current = null
+      })
+      proof.current = { at: Date.now(), value }
+    }
+    return proof.current.value
+  }
+  useEffect(() => {
+    if (captchaOn) void freshProof()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [captchaOn])
+
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (!terms || password.length < MIN_PASSWORD) return
@@ -61,7 +83,12 @@ export default function SignupPage() {
       // Keep `next` (e.g. an /invite/:id link) through the e-mail round trip: the confirmation link
       // lands on /verify-email, which continues there instead of the dashboard.
       const verifyUrl = `${window.location.origin}/verify-email${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`
-      const data = await unwrap(authClient.signUp.email({ name: name.trim(), email: email.trim(), password, callbackURL: verifyUrl }))
+      const captcha = captchaOn ? await freshProof() : null
+      proof.current = null
+      // The server records the accepted terms version (and time) with the new account.
+      const data = await unwrap(
+        authClient.signUp.email({ name: name.trim(), email: email.trim(), password, callbackURL: verifyUrl, termsVersion: LEGAL.termsVersion }, captcha ? { headers: { 'x-captcha': captcha } } : undefined),
+      )
       const hasSession = !!(data as { token?: string | null } | null)?.token
       if (config?.features.emailVerification && !hasSession) setSent(true)
       else {
@@ -120,8 +147,17 @@ export default function SignupPage() {
           onChange={setTerms}
           label={
             <span className={s.checkboxText}>
-              {t('auth.acceptPrefix', 'I agree to the')} <Link to="/legal/terms" target="_blank">{t('legal.terms', 'Terms of service')}</Link>{' '}
-              {t('auth.acceptAnd', 'and have read the')} <Link to="/legal/privacy" target="_blank">{t('legal.privacy', 'Privacy policy')}</Link>.
+              {t('auth.consent', 'I am at least {age} years old, agree to the {terms} and have read the {privacy}.', { age: LEGAL.minAge })
+                .split(/(\{terms\}|\{privacy\})/)
+                .map((part, i) =>
+                  part === '{terms}' ? (
+                    <Link key={i} to="/legal/terms" target="_blank">{t('legal.terms', 'Terms of service')}</Link>
+                  ) : part === '{privacy}' ? (
+                    <Link key={i} to="/legal/privacy" target="_blank">{t('legal.privacy', 'Privacy policy')}</Link>
+                  ) : (
+                    part
+                  ),
+                )}
             </span>
           }
         />

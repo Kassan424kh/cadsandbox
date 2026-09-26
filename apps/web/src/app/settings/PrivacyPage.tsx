@@ -71,7 +71,7 @@ function DeleteSection() {
                 })
               : t(
                   'privacy.deleteDesc',
-                  'Deletes your account, all projects you own, files, collections and personal data. You have {days} days to change your mind; after that, deletion is permanent. Projects stored only on this device are not affected.',
+                  'Deletes your account, all projects you own, files, collections and personal data. You have {days} days to change your mind; after that, deletion is permanent. Projects you created in an organisation stay with the organisation and pass to its owner. Projects stored only on this device are not affected.',
                   { days: LIMITS.accountDeletionGraceDays },
                 )}
           </p>

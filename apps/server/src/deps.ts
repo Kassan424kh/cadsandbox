@@ -11,6 +11,8 @@ import type { RateLimiter } from './http/rate-limit'
 import type { AuditThrottle } from './services/audit'
 import type { AccessEvents } from './services/events'
 import type { ShareGrants } from './services/share-grants'
+import type { ProofOfWork } from './auth/captcha'
+import type { ErrorReporter } from './lib/error-reports'
 import type { BlobStore } from './storage'
 
 export interface CollabContext {
@@ -19,6 +21,8 @@ export interface CollabContext {
   sessionId: string | null
   systemRole: string | null
   projectId: string
+  /** Owner of the project — pays for its storage (quota checks). */
+  ownerId: string
   role: string
   linkId: string | null
   shareToken: string | null
@@ -61,4 +65,8 @@ export interface Deps {
   limiter: RateLimiter
   auditThrottle: AuditThrottle
   grants: ShareGrants
+  /** Sign-up proof-of-work (null when SIGNUP_CAPTCHA=false). */
+  pow: ProofOfWork | null
+  /** Forwards errors to the configured tracker (null when SENTRY_DSN is unset). */
+  errorReporter: ErrorReporter | null
 }

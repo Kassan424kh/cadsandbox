@@ -1,11 +1,13 @@
 // Full-page loading / error / not-found states (also the router's error boundary).
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { isRouteErrorResponse, useNavigate, useRouteError } from 'react-router'
 import { ArrowLeft, Home, RefreshCw } from 'lucide-react'
 import { Button, Logomark } from '../../ui'
 import { useT } from '../../i18n'
 import { useDocumentTitle } from '../hooks'
 import s from './components.module.css'
+import { reportError } from '../errorReporting'
+import { LegalLinks } from './LegalLinks'
 import { LinkButton } from './LinkButton'
 
 export function FullPageLoader({ label }: { label?: string }) {
@@ -23,11 +25,14 @@ export function FullPageLoader({ label }: { label?: string }) {
 export function ErrorCard({ code, title, message, children }: { code?: string; title: string; message?: string; children?: ReactNode }) {
   return (
     <div className={s.fullPage}>
-      <div className={s.errorCard}>
-        {code && <div className={s.errorCode} aria-hidden="true">{code}</div>}
-        <h1 className={s.errorTitle}>{title}</h1>
-        {message && <p className={s.muted}>{message}</p>}
-        {children}
+      <div className={s.fullPageStack}>
+        <div className={s.errorCard}>
+          {code && <div className={s.errorCode} aria-hidden="true">{code}</div>}
+          <h1 className={s.errorTitle}>{title}</h1>
+          {message && <p className={s.muted}>{message}</p>}
+          {children}
+        </div>
+        <LegalLinks />
       </div>
     </div>
   )
@@ -57,9 +62,13 @@ export function NotFoundPage() {
 export function RouteError() {
   const t = useT()
   const error = useRouteError()
-  if (isRouteErrorResponse(error) && error.status === 404) return <NotFoundPage />
+  const notFound = isRouteErrorResponse(error) && error.status === 404
   const message = error instanceof Error ? error.message : String(error ?? '')
   const chunk = /dynamically imported module|Failed to fetch|Importing a module script failed/i.test(message)
+  useEffect(() => {
+    if (!notFound && !chunk) reportError(error)
+  }, [error, notFound, chunk])
+  if (notFound) return <NotFoundPage />
   return (
     <ErrorCard
       code={chunk ? undefined : '!'}

@@ -86,6 +86,7 @@ function createLocalSession(name: string): ProjectSession {
     mode: 'local',
     role,
     readOnly: role === 'viewer' || role === 'commenter',
+    writeBlock: null,
     manifest,
     ready: Promise.resolve(),
     assets,

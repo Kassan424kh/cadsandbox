@@ -161,6 +161,7 @@ Static keys: 617. Dynamic key families (built from data) are listed at the end.
 | `docSettings.units` | Units & precision |
 | `editor.back` | Back to projects |
 | `editor.colorBar` | Quick colors |
+| `editor.designTooLarge` | This design reached the size limit and is read-only. Split it into several design files or remove large imported objects. |
 | `editor.dialogFailed` | This dialog is not available right now |
 | `editor.error.back` | Back to projects |
 | `editor.error.noFile` | This project has no design file yet. |
@@ -174,13 +175,22 @@ Static keys: 617. Dynamic key families (built from data) are listed at the end.
 | `editor.panelTabs` | Panel tabs |
 | `editor.presentation` | Presentation |
 | `editor.projectMenu` | Project menu |
+| `editor.readOnlyDevice` | Editing needs a larger screen — open this project on a tablet or computer to change it. |
 | `editor.readOnlyHint` | You have view access — ask the owner for edit rights to change this design. |
 | `editor.renameFile` | Design name |
 | `editor.resizePanel` | Resize panel |
 | `editor.shareMenu` | Share & export |
 | `editor.stage` | Design canvas |
+| `editor.storageFullMember` | The owner’s storage is full, so this project is read-only until they free up space. |
+| `editor.storageFullOwner` | Your storage is full, so this project is read-only. Delete files or projects you no longer need to keep editing. |
 | `editor.toolOptions` | Tool options |
 | `editor.viewOnly` | View only |
+| `editor.viewOnlyDevice` | Editing needs a larger screen |
+| `engine.reload` | Reload |
+| `engine.unavailableLoad` | The 3D engine could not be loaded. Check your connection and reload the page. |
+| `engine.unavailableStill` | Panels and document editing still work. Exports that need the 3D view are paused. |
+| `engine.unavailableTitle` | 3D view unavailable |
+| `engine.unavailableWebgl` | Your browser could not start WebGL 2, which the 3D view needs. Turn on hardware acceleration in the browser settings, update your graphics driver, or use a current Chrome, Edge, Firefox or Safari. |
 | `files.cannotDeleteOpen` | Switch to another design before deleting this one |
 | `files.confirmDelete` | Delete "{name}"{extra}? It moves to the project trash. |
 | `files.duplicate` | Duplicate |
@@ -347,6 +357,7 @@ Static keys: 617. Dynamic key families (built from data) are listed at the end.
 | `menu.project.duplicateFile` | Duplicate file |
 | `menu.project.duplicated` | File duplicated |
 | `menu.project.help` | Get help |
+| `menu.project.legal` | Imprint & privacy |
 | `menu.project.newDesign` | New design |
 | `menu.project.noFiles` | No other designs |
 | `menu.project.rename` | Rename |
@@ -366,7 +377,7 @@ Static keys: 617. Dynamic key families (built from data) are listed at the end.
 | `onboarding.build.body` | Walls join automatically, doors and windows snap into them, rooms compute their DIN 277 areas. Every level gets a plan view. |
 | `onboarding.build.title` | Build like an architect |
 | `onboarding.done` | Start designing |
-| `onboarding.enginePending` | viewport loading |
+| `onboarding.engineUnavailable` | 3D view unavailable |
 | `onboarding.library.body` | Furniture, materials and your own collections drop straight onto the canvas — materials onto objects. |
 | `onboarding.library.title` | Drag from the Library |
 | `onboarding.next` | Next |
@@ -405,8 +416,6 @@ Static keys: 617. Dynamic key families (built from data) are listed at the end.
 | `panel.schedules` | Schedules |
 | `panel.sheets` | Sheets |
 | `panel.views` | Views |
-| `placeholder.body` | The 3D renderer is being built. Your document, panels and edits already work — {count} objects in this design. |
-| `placeholder.title` | Viewport engine is on its way |
 | `presence.usingTool` | using {tool} |
 | `render.clay` | Clay |
 | `render.hiddenLine` | Hidden line |
@@ -542,7 +551,7 @@ Static keys: 617. Dynamic key families (built from data) are listed at the end.
 | `snap.radius` | Snap radius |
 | `snap.title` | Snapping |
 | `status.cursor` | Cursor position |
-| `status.engineLoading` | Viewport engine not loaded — panels and document editing are available |
+| `status.engineUnavailable` | 3D view unavailable — panels and document editing still work |
 | `status.grid` | Grid |
 | `status.gridToggle` | Toggle grid |
 | `status.hintSelect` | Click to select · drag to box-select · double-click to edit a group |

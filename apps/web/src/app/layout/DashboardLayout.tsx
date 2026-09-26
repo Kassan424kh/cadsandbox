@@ -4,7 +4,7 @@ import { Link, Outlet, useLocation } from 'react-router'
 import { Menu, Plus } from 'lucide-react'
 import { IconButton, Logo, Sheet, SheetContent } from '../../ui'
 import { useT } from '../../i18n'
-import { AnnouncementBanner, DeletionBanner, OfflineBanner } from '../components/Banners'
+import { AnnouncementBanner, DeletionBanner, OfflineBanner, StorageBanner } from '../components/Banners'
 import { useDashboardUI } from '../dashboard/store'
 import { Sidebar } from './Sidebar'
 import s from './layout.module.css'
@@ -27,6 +27,7 @@ export default function DashboardLayout() {
         </div>
         <AnnouncementBanner />
         <DeletionBanner />
+        <StorageBanner />
         <OfflineBanner />
         <div className={s.scroll} key={loc.pathname.split('/')[1] ?? ''}>
           <div className={s.content}>

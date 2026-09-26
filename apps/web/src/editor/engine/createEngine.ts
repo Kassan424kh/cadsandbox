@@ -1,5 +1,5 @@
-// Loads the render engine lazily and falls back to the placeholder when `createEditor` is not
-// exported yet (the engine is developed concurrently) or throws (e.g. no WebGL2).
+// Loads the render engine lazily and falls back to the placeholder engine (document and panels
+// keep working) when the engine chunk can't be loaded or `createEditor` throws (e.g. no WebGL2).
 import type { CreateEditor, Editor, EditorOptions } from '@cadsandbox/render'
 import { createPlaceholderEditor } from './placeholder'
 
@@ -9,13 +9,18 @@ export interface EngineResult {
   error?: string
 }
 
-type RenderModule = Partial<{ createEditor: CreateEditor }>
+type RenderModule = Partial<{ createEditor: CreateEditor; loadError: string }>
 
 let modulePromise: Promise<RenderModule> | null = null
 
 function loadRenderModule(): Promise<RenderModule> {
   if (!modulePromise) {
-    modulePromise = import('@cadsandbox/render').then((m) => m as unknown as RenderModule).catch(() => ({}) as RenderModule)
+    modulePromise = import('@cadsandbox/render')
+      .then((m) => m as unknown as RenderModule)
+      .catch((err: unknown) => {
+        modulePromise = null // a later attempt (reload, next file) may succeed
+        return { loadError: err instanceof Error ? err.message : String(err) }
+      })
   }
   return modulePromise
 }
@@ -46,5 +51,5 @@ export async function createEngine(options: EditorOptions): Promise<EngineResult
       return { editor: createPlaceholderEditor(options), available: false, error }
     }
   }
-  return { editor: createPlaceholderEditor(options), available: false }
+  return { editor: createPlaceholderEditor(options), available: false, error: mod.loadError ?? 'The 3D engine could not be loaded' }
 }
