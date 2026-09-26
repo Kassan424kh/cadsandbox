@@ -89,6 +89,19 @@ x-app: &app
     traefik.http.routers.cadsandbox-http.entrypoints: web
     traefik.http.routers.cadsandbox-http.middlewares: redirect-to-https@file
     traefik.http.routers.cadsandbox-http.service: cadsandbox
+    # www.<APP_DOMAIN> → <APP_DOMAIN> (permanent); the www DNS record must point at this host too
+    traefik.http.routers.cadsandbox-www.rule: Host(`www.${APP_DOMAIN:?set APP_DOMAIN}`)
+    traefik.http.routers.cadsandbox-www.entrypoints: websecure
+    traefik.http.routers.cadsandbox-www.tls.certresolver: ${CERT_RESOLVER:-letsencrypt}
+    traefik.http.routers.cadsandbox-www.middlewares: cadsandbox-www
+    traefik.http.routers.cadsandbox-www.service: cadsandbox
+    traefik.http.routers.cadsandbox-www-http.rule: Host(`www.${APP_DOMAIN:?set APP_DOMAIN}`)
+    traefik.http.routers.cadsandbox-www-http.entrypoints: web
+    traefik.http.routers.cadsandbox-www-http.middlewares: cadsandbox-www
+    traefik.http.routers.cadsandbox-www-http.service: cadsandbox
+    traefik.http.middlewares.cadsandbox-www.redirectregex.regex: '^https?://www\.(.+)'
+    traefik.http.middlewares.cadsandbox-www.redirectregex.replacement: 'https://$${1}'
+    traefik.http.middlewares.cadsandbox-www.redirectregex.permanent: 'true'
     traefik.http.services.cadsandbox.loadbalancer.server.port: '8787'
     # Traefik probes every container itself; a draining one (503 on shutdown) leaves rotation within ~1 s
     traefik.http.services.cadsandbox.loadbalancer.healthcheck.path: /api/health

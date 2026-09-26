@@ -198,7 +198,8 @@ service and either use `STORAGE_DRIVER=s3` or mount the blob volume read-only an
    documents in memory, so only one instance runs outside deployments). Document states stored during
    the overlap are merged, so no edit is lost. The final `up -d --remove-orphans` (re)starts the
    `backup` service with the freshly built image.
-6. Point the domain's DNS A record at the server. With a dynamic IP, add the record name to the
-   `DOMAINS` list of the router's Vercel DNS updater (`<domain>*<record>+<record>`).
+6. Point the domain's DNS A records — `<APP_DOMAIN>` and `www.<APP_DOMAIN>` — at the server; Traefik gets
+   certificates for both and redirects `www` permanently to `<APP_DOMAIN>`. With a dynamic IP, add both
+   record names to the `DOMAINS` list of the router's Vercel DNS updater (`<domain>*<record>+<record>`).
 7. Keep Docker's build cache in check (Dokploy → Settings → daily Docker cleanup); every image build of
    this monorepo adds several GB of cache.
