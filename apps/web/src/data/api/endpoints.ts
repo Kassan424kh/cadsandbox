@@ -21,6 +21,7 @@ import {
   type PublicConfigDTO,
   type RouteKey,
   type Schemas,
+  type LegalOperatorResponse,
   type ShareLinkDTO,
   type SignupChallengeDTO,
   type TicketDTO,
@@ -94,6 +95,10 @@ export const api = {
   config: () => call<PublicConfigDTO>('config', {}, { retries: 1, timeoutMs: 8000 }),
   announcements: () => call<AnnouncementDTO[]>('announcements').then(toList),
 
+  legal: {
+    /** Operator details for the imprint, privacy policy and terms (public). */
+    operator: () => call<LegalOperatorResponse>('legalOperator', {}, { retries: 1 }),
+  },
   /** Proof-of-work challenge for the sign-up form (see data/auth/pow.ts). */
   signupChallenge: () => call<SignupChallengeDTO>('signupChallenge', {}),
   me: {
@@ -231,6 +236,7 @@ export const api = {
       call<Page<AuditEntryDTO> | AuditEntryDTO[]>('adminAudit', {}, { query: q as Query }).then((r) => toPage(r, q.page, q.pageSize)),
     announcements: () => call<AnnouncementDTO[]>('adminAnnouncements').then(toList),
     createAnnouncement: (body: In<'adminAnnouncement'>) => call<AnnouncementDTO>('adminCreateAnnouncement', {}, { json: body }),
+    updateLegalOperator: (body: In<'legalOperator'>) => call<LegalOperatorResponse>('adminUpdateLegalOperator', {}, { json: body }),
     deleteAnnouncement: (id: string) => call<void>('adminDeleteAnnouncement', { id }, { responseType: 'void' }),
   },
 }

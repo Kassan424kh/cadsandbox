@@ -7,6 +7,7 @@ import { jsonBody, limit, type AppEnv } from '../http/context'
 import { redactUrl } from '../log'
 import { jsonLimit, KB, register } from '../http/router'
 import { lifecycle } from '../lifecycle'
+import { getLegalOperator } from '../services/settings'
 
 export const announcementDTO = (a: typeof announcements.$inferSelect): AnnouncementDTO => ({
   id: a.id,
@@ -47,6 +48,12 @@ export function publicRoutes(app: Hono<AppEnv>): void {
       extra: { userAgent: (c.req.header('user-agent') ?? '').slice(0, 300) },
     })
     return c.body(null, 204)
+  })
+
+  // Imprint details for the legal pages (edited in the admin panel; not cached, so edits show at once).
+  register(app, 'legalOperator', async (c) => {
+    c.header('Cache-Control', 'no-cache')
+    return c.json(await getLegalOperator(c.get('deps').db))
   })
 
   // Proof-of-work challenge for the sign-up form (see auth/captcha.ts).

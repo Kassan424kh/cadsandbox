@@ -12,6 +12,7 @@ import { pickLocale } from '../mail/templates'
 import { audit } from '../services/audit'
 import { orgRole, orgsOfUser, orgsWithCounts } from '../services/orgs'
 import { escapeLike, projectDTO, storageUsage } from '../services/projects'
+import { setLegalOperator } from '../services/settings'
 import { ticketDTO, ticketDTOs } from '../services/tickets'
 import { acceptPendingInvites, hardDeleteUser, systemRole, toUserDTO, type UserRow } from '../services/users'
 import { announcementDTO } from './public'
@@ -308,6 +309,15 @@ export function adminRoutes(app: Hono<AppEnv>): void {
       createdAt: r.createdAt.toISOString(),
     }))
     return c.json(page(items, Number(total?.n ?? 0), q))
+  })
+
+  // Imprint details (name, address, contact, VAT ID …) — shown in the imprint, privacy policy and terms.
+  register(app, 'adminUpdateLegalOperator', jsonLimit(8 * KB), async (c) => {
+    const s = requireAdmin(c)
+    const input = await jsonBody(c, schemas.legalOperator)
+    const body = await setLegalOperator(c.get('deps').db, input, s.user.id)
+    await adminAudit(c, 'admin.legal.update', 'settings', 'legal.operator')
+    return c.json(body)
   })
 
   register(app, 'adminAnnouncements', async (c) => {

@@ -55,6 +55,7 @@ const routes: RouteObject[] = [
               { path: 'tickets/:ticketId', ...page(() => import('./admin/AdminTickets')) },
               { path: 'audit', ...page(() => import('./admin/AdminAudit')) },
               { path: 'announcements', ...page(() => import('./admin/AdminAnnouncements')) },
+              { path: 'legal', ...page(() => import('./admin/AdminLegal')) },
               { path: '*', element: <NotFoundPage /> },
             ],
           },

@@ -229,6 +229,35 @@ export interface AnnouncementDTO {
   endsAt: string | null
 }
 
+/**
+ * Operator ("Diensteanbieter") details shown in the imprint, privacy policy and terms — edited by an
+ * admin in the admin panel and stored in the database (never in the repository). '' = not set.
+ */
+export interface LegalOperatorDTO {
+  /** Person or company incl. legal form, e.g. "Jane Doe" or "Example GmbH". */
+  name: string
+  street: string
+  /** Postcode and city, e.g. "21244 Buchholz in der Nordheide". */
+  postalCity: string
+  country: string
+  email: string
+  phone: string
+  vatId: string
+  registerCourt: string
+  registerNumber: string
+  /** Managing director(s) — companies only. */
+  representedBy: string
+  /** Responsible for content (§ 18 Abs. 2 MStV); defaults to name and address. */
+  contentResponsible: string
+  /** Contact for privacy requests; defaults to `email`. */
+  privacyEmail: string
+}
+
+export interface LegalOperatorResponse {
+  operator: LegalOperatorDTO | null
+  updatedAt: string | null
+}
+
 /** Sign-up proof-of-work: find `number` with sha256(salt + number) = challenge (0 ≤ number ≤ maxnumber). */
 export interface SignupChallengeDTO {
   algorithm: 'SHA-256'
@@ -277,6 +306,20 @@ export const schemas = {
   }),
   deleteMe: z.object({ confirmEmail: z.string().email() }),
   acceptTerms: z.object({ version: z.string().min(1).max(40) }),
+  legalOperator: z.object({
+    name: z.string().trim().max(200),
+    street: z.string().trim().max(200),
+    postalCity: z.string().trim().max(200),
+    country: z.string().trim().max(100),
+    email: z.union([z.literal(''), z.string().trim().email().max(200)]),
+    phone: z.string().trim().max(60),
+    vatId: z.string().trim().max(40),
+    registerCourt: z.string().trim().max(200),
+    registerNumber: z.string().trim().max(100),
+    representedBy: z.string().trim().max(300),
+    contentResponsible: z.string().trim().max(500),
+    privacyEmail: z.union([z.literal(''), z.string().trim().email().max(200)]),
+  }),
   clientError: z.object({
     message: z.string().max(1000),
     type: z.string().max(100).optional(),
@@ -383,6 +426,8 @@ export const routes = {
   acceptTerms: 'POST /api/me/terms', // schemas.acceptTerms → MeDTO (records the accepted terms version)
   signupChallenge: 'GET /api/signup-challenge', // proof-of-work challenge; the solution goes in the sign-up's x-captcha header
   clientError: 'POST /api/client-errors', // schemas.clientError → 204; forwarded to the error tracker when configured
+  legalOperator: 'GET /api/legal/operator', // LegalOperatorResponse — imprint details for the legal pages (public)
+  adminUpdateLegalOperator: 'PUT /api/admin/legal/operator', // schemas.legalOperator → LegalOperatorResponse (admin)
 
   listFolders: 'GET /api/folders', // ?orgId= → FolderDTO[]
   createFolder: 'POST /api/folders',

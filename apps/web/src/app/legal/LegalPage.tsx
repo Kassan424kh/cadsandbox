@@ -1,11 +1,14 @@
 // /legal/:doc — imprint, privacy policy, terms (German + English). Rendered as text, never HTML.
 import { Fragment, useState } from 'react'
 import { Link, useParams } from 'react-router'
+import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import { Logo, SegmentedControl } from '../../ui'
 import { useLanguage, useT } from '../../i18n'
 import { useDocumentTitle } from '../hooks'
-import { NotFoundPage } from '../components/PageStates'
+import { FullPageLoader, NotFoundPage } from '../components/PageStates'
+import { api } from '../../data/api/endpoints'
+import { fillOperator } from './operator'
 import { imprint } from './imprint'
 import { privacy } from './privacy'
 import { terms } from './terms'
@@ -39,9 +42,12 @@ export default function LegalPage() {
   const { doc = '' } = useParams()
   const [lang, setLang] = useState<'de' | 'en'>(uiLang)
   const set = (DOCS as Record<string, LegalSet | undefined>)[doc]
-  const content = set?.[lang]
-  useDocumentTitle(content?.title)
-  if (!set || !content) return <NotFoundPage />
+  const operator = useQuery({ queryKey: ['legal-operator'], queryFn: api.legal.operator, staleTime: 60_000, retry: 1 })
+  const raw = set?.[lang]
+  useDocumentTitle(raw?.title)
+  if (!set || !raw) return <NotFoundPage />
+  if (operator.isPending) return <FullPageLoader />
+  const content = fillOperator(raw, operator.data?.operator ?? null, lang)
   const hasPlaceholders = JSON.stringify(content).includes('[PLACEHOLDER')
   return (
     <div className={s.shell}>
@@ -70,8 +76,8 @@ export default function LegalPage() {
             <p className={s.warning} role="note">
               <TriangleAlert size={15} />
               {lang === 'de'
-                ? 'Vorlage: Markierte Angaben müssen vom Betreiber ergänzt und rechtlich geprüft werden.'
-                : 'Template: highlighted details must be completed by the operator and legally reviewed.'}
+                ? 'Markierte Angaben fehlen noch — Administratoren tragen sie unter Admin → Rechtliches ein.'
+                : 'Highlighted details are missing — admins fill them in under Admin → Legal.'}
             </p>
           )}
           {content.intro && (

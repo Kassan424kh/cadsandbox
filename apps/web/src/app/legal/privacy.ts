@@ -9,23 +9,27 @@ const AUDIT = LIMITS.auditRetentionDays
 export const privacy: LegalSet = {
   de: {
     title: 'Datenschutzerklärung',
-    updated: '[PLACEHOLDER: Datum der letzten Änderung]',
+    updated: '26. September 2026',
     intro:
       'CadSandbox ist „local-first“: Modelle und Zeichnungen werden auf Ihrem Gerät berechnet und gespeichert. Ohne Konto verlassen Ihre Projekte Ihr Gerät nicht. Wir setzen keine Analyse-, Tracking- oder Werbedienste ein und laden keine Inhalte von Dritten (Schriften, Skripte und Programmbibliotheken liefern wir selbst aus).',
     sections: [
       {
         heading: '1. Verantwortlicher',
         body: [
-          '[PLACEHOLDER: Firmenname, Anschrift, E-Mail, Telefon — wie im Impressum]',
-          'Datenschutzbeauftragte/r: [PLACEHOLDER: Name und Kontakt, sofern benannt; sonst Abschnitt entfernen]',
+          '{op:name}',
+          '{op:street}',
+          '{op:postalCity}',
+          '{op:country}',
+          'E-Mail: {op:email}',
+          'Telefon: {op:phone}',
         ],
       },
       {
         heading: '2. Hosting und Server-Protokolle',
         body: [
-          'Unsere Server stehen in der Europäischen Union bei [PLACEHOLDER: Hosting-Anbieter, Standort]. Mit dem Anbieter besteht ein Auftragsverarbeitungsvertrag nach Art. 28 DSGVO.',
-          'Zur Wiederherstellbarkeit erstellen wir täglich verschlüsselte Sicherungen der Datenbank und der gespeicherten Dateien bei einem zweiten Anbieter in der EU ([PLACEHOLDER: Backup-Anbieter, Standort]; Auftragsverarbeitungsvertrag nach Art. 28 DSGVO). Die Sicherungen sind nur mit unserem Schlüssel lesbar und werden gestaffelt bis zu 6 Monate aufbewahrt (7 tägliche, 4 wöchentliche, 6 monatliche Sicherungen); gelöschte Daten verschwinden spätestens mit Ablauf dieser Frist auch aus den Sicherungen. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.',
-          'Beim Aufruf verarbeitet der Server technisch notwendige Daten: gekürzte IP-Adresse, Zeitpunkt, angefragte Adresse, Statuscode und Browserkennung. Zweck: sicherer und stabiler Betrieb, Abwehr von Angriffen. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Speicherdauer: [PLACEHOLDER: 14] Tage.',
+          'Wir betreiben unsere Server selbst in Deutschland. Die Internetanbindung stellt ein Telekommunikationsanbieter bereit; er überträgt die Daten nur und verarbeitet keine Inhalte in unserem Auftrag.',
+          'Zur Wiederherstellbarkeit erstellen wir täglich verschlüsselte Sicherungen der Datenbank und der gespeicherten Dateien bei einem spezialisierten Speicheranbieter mit Sitz und Rechenzentrum in der EU (Auftragsverarbeitungsvertrag nach Art. 28 DSGVO). Die Sicherungen sind nur mit unserem Schlüssel lesbar und werden gestaffelt bis zu 6 Monate aufbewahrt (7 tägliche, 4 wöchentliche, 6 monatliche Sicherungen); gelöschte Daten verschwinden spätestens mit Ablauf dieser Frist auch aus den Sicherungen. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.',
+          'Beim Aufruf verarbeitet der Server technisch notwendige Daten: Zeitpunkt, angefragte Adresse, Statuscode und Browserkennung; die IP-Adresse erscheint in den Protokollen der Anwendung nur als täglich wechselnder, nicht umkehrbarer Hashwert. Zweck: sicherer und stabiler Betrieb, Abwehr von Angriffen. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Speicherdauer: Die Protokolle werden fortlaufend überschrieben, sobald sie eine feste Größe erreichen (Rotation).',
           'Tritt ein technischer Fehler auf, erfassen wir Fehlermeldung, Programmstelle (Stacktrace), aufgerufene Seite und Browserkennung in einem selbst betriebenen Fehlerverfolgungssystem auf unseren Servern — ohne Inhalte Ihrer Projekte und ohne Weitergabe an Dritte. Zweck: Fehler finden und beheben. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Speicherdauer: 90 Tage.',
         ],
       },
@@ -46,7 +50,7 @@ export const privacy: LegalSet = {
       {
         heading: '5. Cookies',
         body: [
-          'Wir verwenden ausschließlich ein technisch notwendiges Sitzungs-Cookie (HttpOnly, Secure, SameSite=Lax), das erst bei der Anmeldung gesetzt wird und eine zufällige Sitzungskennung enthält. Es ist für den Dienst unbedingt erforderlich; eine Einwilligung ist nicht nötig (§ 25 Abs. 2 Nr. 2 TDDDG). Es wird bei Abmeldung bzw. nach [PLACEHOLDER: 30] Tagen Inaktivität ungültig.',
+          'Wir verwenden ausschließlich ein technisch notwendiges Sitzungs-Cookie (HttpOnly, Secure, SameSite=Lax), das erst bei der Anmeldung gesetzt wird und eine zufällige Sitzungskennung enthält. Es ist für den Dienst unbedingt erforderlich; eine Einwilligung ist nicht nötig (§ 25 Abs. 2 Nr. 2 TDDDG). Es wird bei Abmeldung bzw. nach 30 Tagen Inaktivität ungültig.',
           'Es gibt keine Analyse-, Marketing- oder Drittanbieter-Cookies.',
         ],
       },
@@ -103,8 +107,8 @@ export const privacy: LegalSet = {
               'Widerruf erteilter Einwilligungen mit Wirkung für die Zukunft (Art. 7 Abs. 3 DSGVO).',
             ],
           },
-          'Sie haben das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren (Art. 77 DSGVO). Zuständig ist: [PLACEHOLDER: zuständige Aufsichtsbehörde, z. B. Landesbeauftragte/r für Datenschutz des Sitzlandes, mit Anschrift].',
-          'Kontakt für Datenschutzanfragen: [PLACEHOLDER: datenschutz@example.com]',
+          'Sie haben das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren (Art. 77 DSGVO). Zuständig ist: Die Landesbeauftragte für den Datenschutz Niedersachsen, Prinzenstraße 5, 30159 Hannover.',
+          'Kontakt für Datenschutzanfragen: {op:privacyEmail}',
         ],
       },
       {
@@ -119,20 +123,20 @@ export const privacy: LegalSet = {
   },
   en: {
     title: 'Privacy policy',
-    updated: '[PLACEHOLDER: date of last change]',
+    updated: '26 September 2026',
     intro:
       'CadSandbox is local-first: models and drawings are computed and stored on your device. Without an account, your projects never leave it. We use no analytics, tracking or advertising services and load nothing from third parties (fonts, scripts and libraries are served by us).',
     sections: [
       {
         heading: '1. Controller',
-        body: ['[PLACEHOLDER: company name, address, email, phone — as in the imprint]', 'Data protection officer: [PLACEHOLDER: name and contact if appointed; otherwise remove]'],
+        body: ['{op:name}', '{op:street}', '{op:postalCity}', '{op:country}', 'Email: {op:email}', 'Phone: {op:phone}'],
       },
       {
         heading: '2. Hosting and server logs',
         body: [
-          'Our servers are located in the European Union at [PLACEHOLDER: hosting provider, location]. A data processing agreement under Art. 28 GDPR is in place.',
-          'To be able to recover from failures we create daily encrypted backups of the database and the stored files with a second provider in the EU ([PLACEHOLDER: backup provider, location]; data processing agreement under Art. 28 GDPR). The backups can only be read with our key and are kept on a rolling schedule for up to 6 months (7 daily, 4 weekly, 6 monthly backups); deleted data disappears from the backups when that period ends at the latest. Legal basis: Art. 6(1)(f) GDPR.',
-          'When you use the service, the server processes technically necessary data: shortened IP address, time, requested address, status code and browser identifier — to operate the service securely and fend off attacks. Legal basis: Art. 6(1)(f) GDPR. Retention: [PLACEHOLDER: 14] days.',
+          'We run our servers ourselves in Germany. Internet connectivity is provided by a telecommunications provider that only transmits the data and does not process any content on our behalf.',
+          'To be able to recover from failures we create daily encrypted backups of the database and the stored files with a specialised storage provider based in the EU with EU data centres (data processing agreement under Art. 28 GDPR). The backups can only be read with our key and are kept on a rolling schedule for up to 6 months (7 daily, 4 weekly, 6 monthly backups); deleted data disappears from the backups when that period ends at the latest. Legal basis: Art. 6(1)(f) GDPR.',
+          'When you use the service, the server processes technically necessary data: time, requested address, status code and browser identifier; the application logs contain the IP address only as a non-reversible hash that changes daily. Purpose: operating the service securely and fending off attacks. Legal basis: Art. 6(1)(f) GDPR. Retention: the logs are overwritten continuously once they reach a fixed size (rotation).',
           'When a technical error occurs we record the error message, the code location (stack trace), the page and the browser identifier in an error tracker we run ourselves on our servers — without the content of your projects and without passing it to third parties. Purpose: finding and fixing bugs. Legal basis: Art. 6(1)(f) GDPR. Retention: 90 days.',
         ],
       },
@@ -153,7 +157,7 @@ export const privacy: LegalSet = {
       {
         heading: '5. Cookies',
         body: [
-          'We use exactly one strictly necessary session cookie (HttpOnly, Secure, SameSite=Lax). It is set only when you sign in and contains a random session identifier. No consent is required (§ 25(2) no. 2 TDDDG). It becomes invalid when you sign out or after [PLACEHOLDER: 30] days of inactivity.',
+          'We use exactly one strictly necessary session cookie (HttpOnly, Secure, SameSite=Lax). It is set only when you sign in and contains a random session identifier. No consent is required (§ 25(2) no. 2 TDDDG). It becomes invalid when you sign out or after 30 days of inactivity.',
           'There are no analytics, marketing or third-party cookies.',
         ],
       },
@@ -210,8 +214,8 @@ export const privacy: LegalSet = {
               'Withdrawal of consent with effect for the future (Art. 7(3) GDPR).',
             ],
           },
-          'You have the right to lodge a complaint with a data protection supervisory authority (Art. 77 GDPR). The competent authority is: [PLACEHOLDER: competent supervisory authority with address].',
-          'Contact for privacy requests: [PLACEHOLDER: privacy@example.com]',
+          'You have the right to lodge a complaint with a data protection supervisory authority (Art. 77 GDPR). The competent authority is: Die Landesbeauftragte für den Datenschutz Niedersachsen (State Commissioner for Data Protection of Lower Saxony), Prinzenstraße 5, 30159 Hannover, Germany.',
+          'Contact for privacy requests: {op:privacyEmail}',
         ],
       },
       { heading: '13. No automated decisions', body: ['We do not make automated individual decisions or carry out profiling (Art. 22 GDPR).'] },

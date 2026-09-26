@@ -1,5 +1,6 @@
 // Structured legal documents (rendered as plain text — never as HTML).
-// "[PLACEHOLDER: …]" marks operator data that must be filled in before going live.
+// "{op:field}" = operator details from Admin → Legal (operator.ts); missing required ones render as
+// highlighted "[PLACEHOLDER: …]" markers.
 
 export type LegalBlock = string | { list: string[] }
 

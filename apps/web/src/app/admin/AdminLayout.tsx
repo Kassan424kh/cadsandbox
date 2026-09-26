@@ -1,6 +1,6 @@
 // /admin/* — staff area (admin + support). Every privileged action is audit-logged server-side.
 import { NavLink, Outlet } from 'react-router'
-import { Building2, FolderKanban, Gauge, Inbox, Megaphone, ScrollText, Users } from 'lucide-react'
+import { Building2, FolderKanban, Gauge, Inbox, Megaphone, Scale, ScrollText, Users } from 'lucide-react'
 import { useT } from '../../i18n'
 import { useAuth } from '../../data/auth/AuthProvider'
 import { RequireStaff } from '../components/Guards'
@@ -16,7 +16,12 @@ export default function AdminLayout() {
     { to: '/admin/projects', icon: <FolderKanban size={16} />, label: t('admin.projects', 'Projects') },
     { to: '/admin/tickets', icon: <Inbox size={16} />, label: t('admin.tickets', 'Support inbox') },
     { to: '/admin/audit', icon: <ScrollText size={16} />, label: t('admin.audit', 'Audit log') },
-    ...(auth.isAdmin ? [{ to: '/admin/announcements', icon: <Megaphone size={16} />, label: t('admin.announcements', 'Announcements') }] : []),
+    ...(auth.isAdmin
+      ? [
+          { to: '/admin/announcements', icon: <Megaphone size={16} />, label: t('admin.announcements', 'Announcements') },
+          { to: '/admin/legal', icon: <Scale size={16} />, label: t('admin.legal', 'Legal details') },
+        ]
+      : []),
   ]
   return (
     <RequireStaff>

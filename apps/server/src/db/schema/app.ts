@@ -353,3 +353,11 @@ export const deletionRequests = pgTable('deletion_requests', {
   requestedAt: ts('requested_at').notNull().defaultNow(),
   executeAfter: ts('execute_after').notNull(),
 })
+
+/** Operator-level settings edited in the admin panel (e.g. `legal.operator` — the imprint details). */
+export const siteSettings = pgTable('site_settings', {
+  key: text('key').primaryKey(),
+  value: jsonb('value').$type<unknown>().notNull(),
+  updatedAt: ts('updated_at').notNull().defaultNow(),
+  updatedBy: text('updated_by').references(() => user.id, { onDelete: 'set null' }),
+})
